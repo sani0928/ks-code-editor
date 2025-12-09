@@ -218,17 +218,29 @@ export default function MusicPlayer() {
       const savedState = loadMusicState();
       if (savedState) {
         setCurrentTrackIndex(savedState.trackIndex);
-        setIsPlaying(false); // 초기 로드 시에는 항상 정지 상태로 시작
         
-        // 저장된 상태가 재생 중이었다면 자동으로 재생 시작
+        // 저장된 상태가 재생 중이었다면 자동 재생 시도
+        // 브라우저 자동 재생 정책으로 인해 실패할 수 있음 (조용히 처리)
         if (savedState.isPlaying) {
-          // 약간의 지연을 두어 음악 인스턴스가 준비된 후 재생
+          setIsPlaying(true); // UI는 재생 상태로 표시
+          // 약간의 지연을 두어 음악 인스턴스가 준비된 후 재생 시도
           setTimeout(async () => {
-            await loadTrack(savedState.trackIndex, true);
+            try {
+              await loadTrack(savedState.trackIndex, true);
+            } catch (error) {
+              // NotAllowedError 등 자동 재생 실패 시 조용히 정지 상태로 변경
+              if (error.name === 'NotAllowedError' || error.name === 'AbortError') {
+                setIsPlaying(false);
+              } else {
+                console.error('재생 실패:', error);
+                setIsPlaying(false);
+              }
+            }
             // 초기 로드 완료 후 플래그 설정
             isInitialLoadRef.current = false;
           }, 100);
         } else {
+          setIsPlaying(false);
           isInitialLoadRef.current = false;
         }
       } else {
