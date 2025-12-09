@@ -88,7 +88,7 @@ export default function TitleBar({
         whiteSpace: 'nowrap',
         pointerEvents: 'none'
       }}>
-        KS Code Editor v1.0
+        KS Code Editor v1.1
       </div>
       <div style={{
         display: 'flex',

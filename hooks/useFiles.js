@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createInitialFiles } from '../lib/fileManager';
 import { 
   saveFiles, 
@@ -15,27 +15,25 @@ import {
  * 파일 관리 훅
  */
 export function useFiles() {
-  // 초기 상태는 항상 동일하게 설정 (hydration 에러 방지)
-  const [files, setFiles] = useState(createInitialFiles);
+  const [files, setFiles] = useState(null);
   const [currentFile, setCurrentFile] = useState('파이쑝.py');
   const [openTabs, setOpenTabs] = useState(['파이쑝.py']);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const isInitializedRef = useRef(false);
 
-  // 클라이언트에서만 localStorage에서 값 로드 (HTML 파일 포함)
+  // 초기 로드: localStorage에서 파일 로드
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !isInitializedRef.current) {
       const savedFiles = loadFiles();
-      if (savedFiles) {
-        // 저장된 파일과 초기 파일 병합 (저장된 파일 우선)
-        // 이렇게 하면 HTML 파일도 유지됨
-        const initialFiles = createInitialFiles();
-        // 빈 problem.html은 제외 (저장된 파일이 있으면 덮어쓰기)
-        const mergedFiles = { ...initialFiles, ...savedFiles };
-        // 빈 problem.html이 저장된 파일에 없으면 제거
-        if (mergedFiles['problem.html'] === '' && !savedFiles['problem.html']) {
-          delete mergedFiles['problem.html'];
-        }
+      const initialFiles = createInitialFiles();
+      
+      if (savedFiles && Object.keys(savedFiles).length > 0) {
+        const mergedFiles = { ...initialFiles };
+        Object.keys(savedFiles).forEach(filename => {
+          mergedFiles[filename] = savedFiles[filename];
+        });
         setFiles(mergedFiles);
+      } else {
+        setFiles(initialFiles);
       }
       
       const savedCurrentFile = loadCurrentFile();
@@ -48,16 +46,9 @@ export function useFiles() {
         setOpenTabs(savedOpenTabs);
       }
       
-      setIsInitialized(true);
+      isInitializedRef.current = true;
     }
   }, []);
-
-  // 파일 변경 시 localStorage에 저장 (초기화 후에만)
-  useEffect(() => {
-    if (typeof window !== 'undefined' && isInitialized) {
-      saveFiles(files);
-    }
-  }, [files, isInitialized]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -72,10 +63,20 @@ export function useFiles() {
   }, [openTabs]);
 
   const updateFile = (filename, content) => {
-    setFiles(prev => ({
-      ...prev,
-      [filename]: content
-    }));
+    setFiles(prev => {
+      const newFiles = {
+        ...prev,
+        [filename]: content
+      };
+      // 코드 파일 변경 시에만 저장
+      if (isInitializedRef.current && typeof window !== 'undefined') {
+        const ext = filename.split('.').pop()?.toLowerCase();
+        if (['py', 'cpp', 'java', 'js'].includes(ext)) {
+          saveFiles(newFiles);
+        }
+      }
+      return newFiles;
+    });
   };
 
   const addFile = (filename, content = '') => {
@@ -86,7 +87,7 @@ export function useFiles() {
   };
 
   const openFile = (filename) => {
-    if (!files[filename]) {
+    if (!files || !files[filename]) {
       addFile(filename);
     }
     if (!openTabs.includes(filename)) {
@@ -95,8 +96,9 @@ export function useFiles() {
     setCurrentFile(filename);
   };
 
+  // files가 null이면 빈 객체 반환 (hydration 에러 방지)
   return {
-    files,
+    files: files || {},
     currentFile,
     openTabs,
     setFiles,
@@ -104,7 +106,8 @@ export function useFiles() {
     setOpenTabs,
     updateFile,
     addFile,
-    openFile
+    openFile,
+    isInitialized: isInitializedRef.current
   };
 }
 

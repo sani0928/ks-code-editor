@@ -27,7 +27,7 @@ import {
 import { skeletonCodes } from '../constants/skeletonCode';
 
 export default function Home() {
-  const { files, currentFile, openTabs, setFiles, setCurrentFile, setOpenTabs, updateFile, openFile } = useFiles();
+  const { files, currentFile, openTabs, setFiles, setCurrentFile, setOpenTabs, updateFile, openFile, isInitialized } = useFiles();
   
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
@@ -115,30 +115,33 @@ export default function Home() {
           const data = await response.json();
           
           if (data.success && data.problemHtml) {
-            const newFiles = { ...files };
-            
-            // 문제 이름으로 파일명 변경 (특수문자 제거)
-            const problemTitle = (data.problemInfo.title || `문제 ${currentProblemNumber}`)
-              .replace(/[<>:"/\\|?*]/g, '_')
-              .trim();
-            const problemFilename = `${problemTitle}.html`;
-            
-            // 기존 problem.html 또는 같은 이름의 문제 파일이 있으면 삭제 (profile.html 제외)
-            Object.keys(newFiles).forEach(key => {
-              if (key === 'problem.html' || (key.endsWith('.html') && key !== 'style.css' && key !== 'profile.html')) {
-                delete newFiles[key];
+            // 함수형 업데이트로 기존 파일 유지
+            setFiles(prev => {
+              const newFiles = { ...prev };
+              
+              // 문제 이름으로 파일명 변경 (특수문자 제거)
+              const problemTitle = (data.problemInfo.title || `문제 ${currentProblemNumber}`)
+                .replace(/[<>:"/\\|?*]/g, '_')
+                .trim();
+              const problemFilename = `${problemTitle}.html`;
+              
+              // 기존 problem.html 또는 같은 이름의 문제 파일이 있으면 삭제 (profile.html 제외)
+              Object.keys(newFiles).forEach(key => {
+                if (key === 'problem.html' || (key.endsWith('.html') && key !== 'style.css' && key !== 'profile.html')) {
+                  delete newFiles[key];
+                }
+              });
+              
+              newFiles[problemFilename] = data.problemHtml;
+              
+              // 예제 입력 1을 input.txt에 자동으로 넣기
+              if (data.problemInfo && data.problemInfo.sampleInputs && data.problemInfo.sampleInputs.length > 0) {
+                const firstSampleInput = data.problemInfo.sampleInputs[0].trim();
+                newFiles['input.txt'] = firstSampleInput;
               }
+              
+              return newFiles;
             });
-            
-            newFiles[problemFilename] = data.problemHtml;
-            
-            // 예제 입력 1을 input.txt에 자동으로 넣기
-            if (data.problemInfo && data.problemInfo.sampleInputs && data.problemInfo.sampleInputs.length > 0) {
-              const firstSampleInput = data.problemInfo.sampleInputs[0].trim();
-              newFiles['input.txt'] = firstSampleInput;
-            }
-            
-            setFiles(newFiles);
 
             // 새로고침 시 파일 유지
           }
@@ -231,18 +234,19 @@ export default function Home() {
     document.body.appendChild(script);
   }, [pyodide, isPyodideReady]);
 
-  // 테마 로드 및 적용
+  // 테마 로드 및 적용 (초기 로드 시 한 번만)
   useEffect(() => {
-    if (typeof window !== 'undefined' && files['style.css']) {
+    if (typeof window !== 'undefined' && isInitialized && files['style.css']) {
       const savedTheme = loadTheme();
-      if (savedTheme) {
-        const newFiles = { ...files };
-        newFiles['style.css'] = savedTheme;
-        setFiles(newFiles);
+      if (savedTheme && savedTheme !== files['style.css']) {
+        setFiles(prev => ({
+          ...prev,
+          'style.css': savedTheme
+        }));
       }
       applyCSSVariables(files['style.css']);
     }
-  }, []);
+  }, [isInitialized]); // files 의존성 제거
 
   // style.css 변경 시 테마 적용
   useEffect(() => {
@@ -738,30 +742,35 @@ export default function Home() {
           .trim();
         const problemFilename = `${problemTitle}.html`;
         
-        // 기존 problem.html 또는 같은 이름의 문제 파일이 있으면 삭제 (profile.html 제외)
-        Object.keys(newFiles).forEach(key => {
-          if (key === 'problem.html' || (key.endsWith('.html') && key !== 'style.css' && key !== 'profile.html')) {
-            // 탭에서도 제거
-            setOpenTabs(prev => prev.filter(tab => tab !== key));
-            // 그룹에서도 제거
-            setEditorGroups(groups => groups.map(group => ({
-              ...group,
-              tabs: group.tabs.filter(tab => tab !== key),
-              activeTab: group.activeTab === key ? (group.tabs.find(t => t !== key) || null) : group.activeTab
-            })));
-            delete newFiles[key];
+        // 함수형 업데이트로 기존 파일 유지
+        setFiles(prev => {
+          const newFiles = { ...prev };
+          
+          // 기존 problem.html 또는 같은 이름의 문제 파일이 있으면 삭제 (profile.html 제외)
+          Object.keys(newFiles).forEach(key => {
+            if (key === 'problem.html' || (key.endsWith('.html') && key !== 'style.css' && key !== 'profile.html')) {
+              // 탭에서도 제거
+              setOpenTabs(prev => prev.filter(tab => tab !== key));
+              // 그룹에서도 제거
+              setEditorGroups(groups => groups.map(group => ({
+                ...group,
+                tabs: group.tabs.filter(tab => tab !== key),
+                activeTab: group.activeTab === key ? (group.tabs.find(t => t !== key) || null) : group.activeTab
+              })));
+              delete newFiles[key];
+            }
+          });
+          
+          newFiles[problemFilename] = data.problemHtml;
+          
+          // 예제 입력 1을 input.txt에 자동으로 넣기
+          if (data.problemInfo && data.problemInfo.sampleInputs && data.problemInfo.sampleInputs.length > 0) {
+            const firstSampleInput = data.problemInfo.sampleInputs[0].trim();
+            newFiles['input.txt'] = firstSampleInput;
           }
+          
+          return newFiles;
         });
-        
-        newFiles[problemFilename] = data.problemHtml;
-        
-        // 예제 입력 1을 input.txt에 자동으로 넣기
-        if (data.problemInfo && data.problemInfo.sampleInputs && data.problemInfo.sampleInputs.length > 0) {
-          const firstSampleInput = data.problemInfo.sampleInputs[0].trim();
-          newFiles['input.txt'] = firstSampleInput;
-        }
-        
-        setFiles(newFiles);
         setCurrentProblemNumber(problemNumber.trim());
         
         // 문제 가져오기 성공 시에만 문제 번호 저장
@@ -819,12 +828,11 @@ export default function Home() {
       const data = await response.json();
       
       if (data.success && data.profileHtml) {
-        const newFiles = { ...files };
-        
-        // profile.html 파일 업데이트
-        newFiles['profile.html'] = data.profileHtml;
-        
-        setFiles(newFiles);
+        // 함수형 업데이트로 기존 파일 유지
+        setFiles(prev => ({
+          ...prev,
+          'profile.html': data.profileHtml
+        }));
         setCurrentUserId(userId.trim());
 
         // 프로필 파일 열기

@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 /**
  * 출력 패널 컴포넌트
  */
@@ -8,6 +10,26 @@ export default function OutputPanel({
   isRunning, 
   onRunCode 
 }) {
+  const [currentTime, setCurrentTime] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours % 12 || 12;
+      const formattedHours = String(displayHours).padStart(2, '0');
+      setCurrentTime(`${ampm} ${formattedHours}:${minutes}:${seconds}`);
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div style={{
       height: '300px',
@@ -68,6 +90,15 @@ export default function OutputPanel({
           lineHeight: '1.5'
         }}>
           실행 시 입력은 input.txt 파일에서 자동으로 읽어옵니다.
+        </div>
+        <div style={{
+          marginLeft: 'auto',
+          fontSize: '11px',
+          color: 'var(--text-primary)',
+          fontFamily: "'Consolas', 'Courier New', monospace",
+          fontWeight: 500
+        }}>
+          {currentTime}
         </div>
       </div>
       <div
