@@ -2,6 +2,9 @@
 [https://ks-code-editor.com](https://ks-code-editor.com)
 
 백준(BOJ) 문제 풀이를 위한 웹 기반 코드 에디터입니다. Monaco Editor를 기반으로 하며, 문제 정보 자동 불러오기, 코드 실행, 프로필 조회 등 다양한 기능을 제공합니다.
+
+![Ks Code Editor 메인 화면](screenshot/main1.png)
+
 ## 주요 기능
 
 ### 에디터 기능
