@@ -212,50 +212,26 @@ export default function MusicPlayer() {
     }
   }, [tracks.length, currentTrackIndex, loadTrack]);
 
-  // 초기 로드: localStorage에서 상태 복원
+  // 초기 로드: localStorage에서 트랙 인덱스 복원
   useEffect(() => {
     if (typeof window !== 'undefined' && isInitialLoadRef.current) {
       const savedState = loadMusicState();
       if (savedState) {
         setCurrentTrackIndex(savedState.trackIndex);
-        
-        // 저장된 상태가 재생 중이었다면 자동 재생 시도
-        // 브라우저 자동 재생 정책으로 인해 실패할 수 있음 (조용히 처리)
-        if (savedState.isPlaying) {
-          setIsPlaying(true); // UI는 재생 상태로 표시
-          // 약간의 지연을 두어 음악 인스턴스가 준비된 후 재생 시도
-          setTimeout(async () => {
-            try {
-              await loadTrack(savedState.trackIndex, true);
-            } catch (error) {
-              // NotAllowedError 등 자동 재생 실패 시 조용히 정지 상태로 변경
-              if (error.name === 'NotAllowedError' || error.name === 'AbortError') {
-                setIsPlaying(false);
-              } else {
-                console.error('재생 실패:', error);
-                setIsPlaying(false);
-              }
-            }
-            // 초기 로드 완료 후 플래그 설정
-            isInitialLoadRef.current = false;
-          }, 100);
-        } else {
-          setIsPlaying(false);
-          isInitialLoadRef.current = false;
-        }
-      } else {
-        isInitialLoadRef.current = false;
       }
+      // 재접속 시 항상 정지 상태로 시작
+      setIsPlaying(false);
+      isInitialLoadRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 초기 로드만 실행되도록 빈 배열 유지
 
-  // 상태 변경 시 localStorage에 저장 (초기 로드 제외)
+  // 트랙 변경 시 localStorage에 저장 (초기 로드 제외)
   useEffect(() => {
     if (!isInitialLoadRef.current && typeof window !== 'undefined') {
-      saveMusicState(isPlaying, currentTrackIndex);
+      saveMusicState(currentTrackIndex);
     }
-  }, [isPlaying, currentTrackIndex]);
+  }, [currentTrackIndex]);
 
   // 트랙 변경 시 음악 소스 업데이트
   useEffect(() => {
