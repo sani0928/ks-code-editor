@@ -143,15 +143,16 @@ export default function EditorGroup({
     <div
       ref={drop}
       style={{
-        flex: group.width === '100%' ? '1 1 100%' : '1 1 50%',
+        width: group.width,
         minWidth: '200px',
-        maxWidth: group.width === '100%' ? '100%' : '50%',
+        maxWidth: group.width === '100%' ? '100%' : undefined,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         backgroundColor: (isOver || isActive) ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
         cursor: 'default',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        flexShrink: 0
       }}
     >
       {/* 탭 바 */}

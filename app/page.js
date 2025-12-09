@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import TitleBar from '../components/UI/TitleBar';
 import FileExplorer from '../components/Sidebar/FileExplorer';
 import EditorGroup from '../components/Editor/EditorGroup';
 import NewGroupDropZone from '../components/Editor/NewGroupDropZone';
+import GroupResizer from '../components/Editor/GroupResizer';
 import OutputPanel from '../components/Terminal/OutputPanel';
 import StatusBar from '../components/UI/StatusBar';
 import { useFiles } from '../hooks/useFiles';
@@ -264,12 +265,6 @@ export default function Home() {
     }
   }, [activeGroupId]);
 
-  // 문제 번호 저장
-  useEffect(() => {
-    if (problemNumber) {
-      saveProblemNumber(problemNumber);
-    }
-  }, [problemNumber]);
 
   // 유저 아이디 저장
   useEffect(() => {
@@ -414,11 +409,24 @@ export default function Home() {
     if (currentIndex !== -1) {
       // 이미 있는 경우 순서만 변경
       newTabs.splice(currentIndex, 1);
-      const finalIndex = insertIndex > currentIndex ? insertIndex - 1 : insertIndex;
+      // insertIndex가 null이거나 유효하지 않은 경우 처리
+      let finalIndex = insertIndex;
+      if (insertIndex === null || insertIndex === undefined || insertIndex < 0) {
+        finalIndex = newTabs.length;
+      } else {
+        finalIndex = insertIndex > currentIndex ? insertIndex - 1 : insertIndex;
+      }
+      // 인덱스 범위 체크
+      finalIndex = Math.max(0, Math.min(finalIndex, newTabs.length));
       newTabs.splice(finalIndex, 0, filename);
     } else {
       // 새로 추가하는 경우
-      const finalIndex = insertIndex !== null ? insertIndex : newTabs.length;
+      let finalIndex = insertIndex;
+      if (insertIndex === null || insertIndex === undefined || insertIndex < 0) {
+        finalIndex = newTabs.length;
+      }
+      // 인덱스 범위 체크
+      finalIndex = Math.max(0, Math.min(finalIndex, newTabs.length));
       newTabs.splice(finalIndex, 0, filename);
     }
     
@@ -495,24 +503,31 @@ export default function Home() {
       if (newGroups.length < groups.length) {
         if (newGroups.length === 0) {
           // 그룹이 하나도 없으면 기본 그룹 생성 (드롭된 탭 포함)
-          return [{ id: 0, tabs: [item.filename], activeTab: item.filename, width: '100%' }];
+          const defaultGroup = [{ id: 0, tabs: [item.filename], activeTab: item.filename, width: '100%' }];
+          setActiveGroupId(0);
+          setCurrentFile(item.filename);
+          return defaultGroup;
         }
         
         // 삭제된 그룹이 활성 그룹이었으면 대상 그룹 활성화
-        if (activeGroupId === item.groupId) {
-          const nextGroup = newGroups.find(g => g.id === targetGroupId) || newGroups[0];
+        const wasActiveGroup = activeGroupId === item.groupId;
+        const cleanedGroups = handleEmptyGroupCleanup(newGroups, item.groupId);
+        
+        if (wasActiveGroup) {
+          const nextGroup = cleanedGroups.find(g => g.id === targetGroupId) || cleanedGroups[0];
           setActiveGroupId(nextGroup.id);
-          setCurrentFile(nextGroup.activeTab);
-        } else {
-          return handleEmptyGroupCleanup(newGroups, item.groupId);
+          setCurrentFile(item.filename);
         }
+        
+        return cleanedGroups;
       }
+      
+      // 빈 그룹이 삭제되지 않은 경우에도 활성 그룹 업데이트
+      setCurrentFile(item.filename);
+      setActiveGroupId(targetGroupId);
       
       return newGroups;
     });
-
-    setCurrentFile(item.filename);
-    setActiveGroupId(targetGroupId);
   };
 
   const handleTabReorder = (filename, groupId, newIndex) => {
@@ -550,39 +565,72 @@ export default function Home() {
     if (editorGroups.length >= 2) return;
 
     const filename = item.filename;
-    const newGroupId = Math.max(...editorGroups.map(g => g.id)) + 1;
-    const newGroups = [...editorGroups];
     
-    newGroups.forEach(group => {
-      group.width = '50%';
-    });
+    // 안전한 그룹 ID 생성
+    const maxId = editorGroups.length > 0 
+      ? Math.max(...editorGroups.map(g => g.id)) 
+      : -1;
+    const newGroupId = maxId + 1;
+    
+    setEditorGroups(groups => {
+      const newGroups = groups.map(group => ({
+        ...group,
+        width: '50%'
+      }));
 
-    // 탭인 경우에만 원본 그룹에서 제거
-    if (item.type === 'tab' && item.groupId !== undefined) {
-      const sourceGroupIndex = newGroups.findIndex(g => g.id === item.groupId);
-      if (sourceGroupIndex !== -1) {
-        const sourceGroup = newGroups[sourceGroupIndex];
-        const newTabs = sourceGroup.tabs.filter(tab => tab !== filename);
-        const nextActiveTab = newTabs[0] || null;
-        newGroups[sourceGroupIndex] = { ...sourceGroup, tabs: newTabs, activeTab: nextActiveTab };
+      // 탭인 경우에만 원본 그룹에서 제거
+      if (item.type === 'tab' && item.groupId !== undefined) {
+        const sourceGroupIndex = newGroups.findIndex(g => g.id === item.groupId);
+        if (sourceGroupIndex !== -1) {
+          const sourceGroup = newGroups[sourceGroupIndex];
+          const newTabs = sourceGroup.tabs.filter(tab => tab !== filename);
+          
+          // 빈 그룹이 되는 경우 처리
+          if (newTabs.length === 0) {
+            // 빈 그룹은 제거하지 않고 유지 (새 그룹이 생성되므로)
+            // 하지만 실제로는 새 그룹이 생성되므로 빈 그룹을 제거해야 함
+            newGroups.splice(sourceGroupIndex, 1);
+          } else {
+            const nextActiveTab = newTabs[0] || null;
+            newGroups[sourceGroupIndex] = { ...sourceGroup, tabs: newTabs, activeTab: nextActiveTab };
+          }
+        }
       }
-    }
+
+      // 새 그룹 추가
+      newGroups.push({
+        id: newGroupId,
+        tabs: [filename],
+        activeTab: filename,
+        width: '50%'
+      });
+
+      // 그룹이 1개만 남은 경우 너비 조정
+      if (newGroups.length === 1) {
+        newGroups[0].width = '100%';
+      }
+
+      return newGroups;
+    });
 
     // 파일이 탭에 없으면 추가
     if (!openTabs.includes(filename)) {
       setOpenTabs([...openTabs, filename]);
     }
 
-    newGroups.push({
-      id: newGroupId,
-      tabs: [filename],
-      activeTab: filename,
-      width: '50%'
-    });
-
-    setEditorGroups(newGroups);
     setCurrentFile(filename);
     setActiveGroupId(newGroupId);
+  };
+
+  const handleGroupResize = (leftGroupId, rightGroupId, leftPercent, rightPercent) => {
+    setEditorGroups(groups => groups.map(group => {
+      if (group.id === leftGroupId) {
+        return { ...group, width: `${leftPercent}%` };
+      } else if (group.id === rightGroupId) {
+        return { ...group, width: `${rightPercent}%` };
+      }
+      return group;
+    }));
   };
 
   const handleEditorChange = (value, groupId) => {
@@ -715,6 +763,9 @@ export default function Home() {
         
         setFiles(newFiles);
         setCurrentProblemNumber(problemNumber.trim());
+        
+        // 문제 가져오기 성공 시에만 문제 번호 저장
+        saveProblemNumber(problemNumber.trim());
 
         // 문제 파일 열기
         if (!openTabs.includes(problemFilename)) {
@@ -1032,23 +1083,32 @@ export default function Home() {
             />
             
             {editorGroups.map((group, groupIndex) => (
-              <EditorGroup
-                key={group.id}
-                group={group}
-                files={files}
-                onEditorChange={handleEditorChange}
-                onEditorMount={handleEditorMount}
-                onTabClick={handleTabClick}
-                onTabClose={handleCloseTab}
-                onTabDoubleClick={handleTabDoubleClick}
-                onTabDrop={handleTabDrop}
-                onTabReorder={handleTabReorder}
-                onFileDrop={handleFileDrop}
-                onEditorClick={handleEditorClick}
-                isActive={activeGroupId === group.id}
-                problemHtmlViewMode={problemHtmlViewMode}
-                isNewGroupDropZoneVisible={editorGroups.length === 1}
-              />
+              <Fragment key={group.id}>
+                <EditorGroup
+                  group={group}
+                  files={files}
+                  onEditorChange={handleEditorChange}
+                  onEditorMount={handleEditorMount}
+                  onTabClick={handleTabClick}
+                  onTabClose={handleCloseTab}
+                  onTabDoubleClick={handleTabDoubleClick}
+                  onTabDrop={handleTabDrop}
+                  onTabReorder={handleTabReorder}
+                  onFileDrop={handleFileDrop}
+                  onEditorClick={handleEditorClick}
+                  isActive={activeGroupId === group.id}
+                  problemHtmlViewMode={problemHtmlViewMode}
+                  isNewGroupDropZoneVisible={editorGroups.length === 1}
+                />
+                {/* 두 그룹 사이에 리사이저 추가 */}
+                {groupIndex < editorGroups.length - 1 && (
+                  <GroupResizer
+                    leftGroupId={group.id}
+                    rightGroupId={editorGroups[groupIndex + 1].id}
+                    onResize={handleGroupResize}
+                  />
+                )}
+              </Fragment>
             ))}
           </div>
 
