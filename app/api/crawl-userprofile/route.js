@@ -168,9 +168,10 @@ export async function POST(request) {
     }
     .rating-details {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 15px;
-      margin: 20px 0;
+      margin: 20px auto;
+      max-width: 800px;
     }
     .rating-item {
       background-color: #252526;
