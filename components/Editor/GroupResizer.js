@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 
 /**
  * 에디터 그룹 간 너비 조절 리사이저 컴포넌트
@@ -12,9 +12,23 @@ export default function GroupResizer({
 }) {
   const resizerRef = useRef(null);
   const isResizingRef = useRef(false);
+  const rafRef = useRef(null);
+  const onResizeRef = useRef(onResize);
 
+  // onResize가 변경될 때마다 ref 업데이트
   useEffect(() => {
-    const handleMouseMove = (e) => {
+    onResizeRef.current = onResize;
+  }, [onResize]);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isResizingRef.current) return;
+
+    // requestAnimationFrame으로 업데이트 최적화 (60fps로 제한)
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+
+    rafRef.current = requestAnimationFrame(() => {
       if (!isResizingRef.current) return;
 
       const container = document.getElementById('editor-container');
@@ -38,34 +52,36 @@ export default function GroupResizer({
       );
       const rightPercent = 100 - leftPercent;
 
-      onResize(leftGroupId, rightGroupId, leftPercent, rightPercent);
-    };
+      onResizeRef.current(leftGroupId, rightGroupId, leftPercent, rightPercent);
+    });
+  }, [leftGroupId, rightGroupId]);
 
-    const handleMouseUp = () => {
-      if (isResizingRef.current) {
-        isResizingRef.current = false;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-      }
-    };
+  const handleMouseUp = useCallback(() => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
 
-    // 항상 이벤트 리스너 등록 (isResizingRef로 제어)
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
+    if (isResizingRef.current) {
+      isResizingRef.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [leftGroupId, rightGroupId, onResize]);
+    }
+  }, [handleMouseMove]);
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
     isResizingRef.current = true;
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
-  };
+    
+    // mousedown 시에만 이벤트 리스너 등록
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }, [handleMouseMove, handleMouseUp]);
 
   return (
     <div

@@ -626,7 +626,7 @@ export default function Home() {
     setActiveGroupId(newGroupId);
   };
 
-  const handleGroupResize = (leftGroupId, rightGroupId, leftPercent, rightPercent) => {
+  const handleGroupResize = useCallback((leftGroupId, rightGroupId, leftPercent, rightPercent) => {
     setEditorGroups(groups => groups.map(group => {
       if (group.id === leftGroupId) {
         return { ...group, width: `${leftPercent}%` };
@@ -635,7 +635,7 @@ export default function Home() {
       }
       return group;
     }));
-  };
+  }, []);
 
   const handleEditorChange = (value, groupId) => {
     if (value !== undefined) {
