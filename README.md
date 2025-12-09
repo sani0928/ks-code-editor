@@ -76,6 +76,7 @@ npm start
 - `Ctrl + Z`: 실행 취소 (Undo)
 - `Ctrl + Shift + Z`: 다시 실행 (Redo)
 - `Ctrl + Y`: 다시 실행 (Redo)
+- `Ctrl + 휠`: 에디터 확대/축소
 
 ### 파일 단축키
 - `Ctrl + S`: 코드 파일 다운로드 (코드 파일만 해당)

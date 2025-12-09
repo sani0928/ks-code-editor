@@ -52,6 +52,7 @@ export default function MonacoEditorWrapper({
     links: true,
     colorDecorators: true,
     undoRedo: 'full',
+    mouseWheelZoom: true, // Ctrl + 마우스 휠로 확대/축소 활성화
     ...options
   };
 
