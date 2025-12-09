@@ -21,7 +21,7 @@ export default function ProblemViewer({ html }) {
           backgroundColor: 'var(--bg-primary)'
         }}
         title="Problem Preview"
-        sandbox="allow-same-origin"
+        sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
       />
     </div>
   );

@@ -144,16 +144,32 @@ export async function POST(request) {
     const sampleInputs = [];
     const sampleOutputs = [];
 
+    // 텍스트 정리 함수: 앞뒤 공백과 빈 줄 제거
+    const cleanText = (text) => {
+      if (!text) return '';
+      // 각 줄을 분리
+      const lines = text.split('\n');
+      // 앞뒤 빈 줄 제거
+      while (lines.length > 0 && lines[0].trim() === '') {
+        lines.shift();
+      }
+      while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+        lines.pop();
+      }
+      // 각 줄의 앞뒤 공백 제거 (내용은 유지)
+      return lines.map(line => line.trimEnd()).join('\n');
+    };
+
     $('pre[id^="sample-input"]').each((i, elem) => {
-      sampleInputs.push($(elem).text());
+      sampleInputs.push(cleanText($(elem).text()));
     });
     $('pre[id^="sample-output"]').each((i, elem) => {
-      sampleOutputs.push($(elem).text());
+      sampleOutputs.push(cleanText($(elem).text()));
     });
 
     if (sampleInputs.length === 0) {
       $('pre.sampledata').each((i, elem) => {
-        const text = $(elem).text();
+        const text = cleanText($(elem).text());
         if (i % 2 === 0) {
           sampleInputs.push(text);
         } else {
@@ -238,6 +254,13 @@ export async function POST(request) {
       border-radius: 5px;
       overflow-x: auto;
       border: 1px solid #3e3e42;
+      margin: 0;
+    }
+    pre code {
+      background-color: transparent;
+      padding: 0;
+      border-radius: 0;
+      font-family: 'Consolas', 'Courier New', monospace;
     }
     code {
       background-color: #252526;
@@ -310,11 +333,11 @@ export async function POST(request) {
         problemHtml += `\n  <h2>예제 ${i + 1}</h2>\n`;
         
         if (i < sampleInputs.length) {
-          problemHtml += `\n  <h3>예제 입력 ${i + 1}</h3>\n  <pre><code>${escapeHtml(sampleInputs[i])}</code></pre>\n`;
+          problemHtml += `\n  <h3>예제 입력 ${i + 1}</h3>\n<pre><code>${escapeHtml(sampleInputs[i])}</code></pre>\n`;
         }
         
         if (i < sampleOutputs.length) {
-          problemHtml += `\n  <h3>예제 출력 ${i + 1}</h3>\n  <pre><code>${escapeHtml(sampleOutputs[i])}</code></pre>\n`;
+          problemHtml += `\n  <h3>예제 출력 ${i + 1}</h3>\n<pre><code>${escapeHtml(sampleOutputs[i])}</code></pre>\n`;
         }
       }
     }

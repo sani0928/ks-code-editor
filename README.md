@@ -49,7 +49,7 @@
 
 ```bash
 # 저장소 클론
-git clone https://github.com/your-username/ks-code-editor.git
+git clone https://github.com/sani0928/ks-code-editor.git
 
 # 디렉토리 이동
 cd ks-code-editor

@@ -1,6 +1,6 @@
 {
   "name": "ks-code-editor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "KS Code Editor - 백준 문제 풀이를 위한 웹 에디터",
   "scripts": {
     "dev": "next dev",

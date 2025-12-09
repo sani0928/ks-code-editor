@@ -189,10 +189,17 @@ export async function POST(request) {
       font-size: 20px;
       font-weight: 600;
     }
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
-  <h1 style="color: ${tierColor};">${escapeHtml(userData.handle)}</h1>
+  <h1 style="color: ${tierColor};"><a href="https://solved.ac/profile/${encodeURIComponent(userData.handle)}" target="_blank" rel="noopener noreferrer">${escapeHtml(userData.handle)}</a></h1>
   ${tier ? `<div class="tier" style="background-color: ${tierColor};">${escapeHtml(tier)}</div>` : ''}
   <div class="bio">${userData.bio && userData.bio.trim() ? escapeHtml(userData.bio) : '자기소개가 없습니다.'}</div>
   
