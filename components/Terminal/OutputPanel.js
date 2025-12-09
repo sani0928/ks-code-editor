@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { PiCopySimple } from 'react-icons/pi';
+import MusicPlayer from './MusicPlayer';
 
 /**
  * 출력 패널 컴포넌트
@@ -38,6 +40,32 @@ export default function OutputPanel({
     }
   }, [output]);
 
+  // 출력 결과 복사 함수
+  const handleCopy = async () => {
+    if (!output) return;
+    
+    try {
+      // HTML 태그 제거하고 순수 텍스트만 추출
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = output;
+      const textContent = tempDiv.textContent || tempDiv.innerText || '';
+      
+      await navigator.clipboard.writeText(textContent);
+      
+      // 복사 성공 피드백 (선택사항)
+      const copyButton = document.querySelector('[data-copy-button]');
+      if (copyButton) {
+        const originalColor = copyButton.style.color;
+        copyButton.style.color = 'var(--accent-color)';
+        setTimeout(() => {
+          copyButton.style.color = originalColor;
+        }, 500);
+      }
+    } catch (error) {
+      console.error('복사 실패:', error);
+    }
+  };
+
   return (
     <div style={{
       height: '100%',
@@ -58,7 +86,7 @@ export default function OutputPanel({
           borderBottom: '1px solid var(--border-color)',
           fontSize: '12px',
           color: 'var(--text-primary)',
-          gap: '15px',
+          gap: '12px',
           userSelect: 'none',
           WebkitUserSelect: 'none',
           MozUserSelect: 'none',
@@ -70,10 +98,33 @@ export default function OutputPanel({
           padding: '4px 8px',
           cursor: 'pointer',
           borderRadius: '3px',
+          fontWeight: 500,
           backgroundColor: 'var(--bg-tertiary)',
         }}>
           OUTPUT
         </div>
+        <button
+          data-copy-button
+          onClick={handleCopy}
+          disabled={!output}
+          style={{
+            padding: '4px 8px',
+            backgroundColor: 'transparent',
+            color: output ? 'var(--text-primary)' : 'var(--text-secondary)',
+            border: 'none',
+            borderRadius: '3px',
+            cursor: output ? 'pointer' : 'default',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '14px',
+            opacity: output ? 1 : 0.5,
+            transition: 'color 0.2s'
+          }}
+          title="OUTPUT 복사"
+        >
+          <PiCopySimple />
+        </button>
         <button
           style={{
             padding: '4px 10px',
@@ -83,7 +134,6 @@ export default function OutputPanel({
             borderRadius: '3px',
             cursor: isRunning ? 'not-allowed' : 'pointer',
             fontSize: '10px',
-            fontWeight: 500,
             opacity: isRunning ? 0.6 : 1
           }}
           onClick={onRunCode}
@@ -110,12 +160,19 @@ export default function OutputPanel({
         </div>
         <div style={{
           marginLeft: 'auto',
-          fontSize: '11px',
-          color: 'var(--text-primary)',
-          fontFamily: "'Consolas', 'Courier New', monospace",
-          fontWeight: 500
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
         }}>
-          {currentTime}
+          <MusicPlayer />
+          <div style={{
+            fontSize: '11px',
+            color: 'var(--text-primary)',
+            fontFamily: "'Consolas', 'Courier New', monospace",
+            fontWeight: 500
+          }}>
+            {currentTime}
+          </div>
         </div>
       </div>
       <div
