@@ -5,6 +5,7 @@ import { useDrop } from 'react-dnd';
 import MonacoEditor from './MonacoEditor';
 import EditorTabs from './EditorTabs';
 import ProblemViewer from '../Problem/ProblemViewer';
+import ProfileViewer from '../Profile/ProfileViewer';
 import { getLanguageFromFile } from '../../lib/fileManager';
 
 const ItemTypes = {
@@ -29,6 +30,7 @@ export default function EditorGroup({
   onEditorClick,
   isActive,
   problemHtmlViewMode,
+  profileHtmlViewMode,
   isNewGroupDropZoneVisible = false,
 }) {
   const [hoverIndex, setHoverIndex] = useState(null);
@@ -134,7 +136,9 @@ export default function EditorGroup({
 
   const activeFile = group.activeTab;
   const language = activeFile ? getLanguageFromFile(activeFile) : 'plaintext';
+  const isProfileHtml = activeFile === 'profile.html';
   const isProblemHtml = activeFile && 
+    !isProfileHtml &&
     activeFile.endsWith('.html') && 
     files[activeFile] && 
     (files[activeFile].includes('<!DOCTYPE html>') || files[activeFile].includes('<html'));
@@ -241,9 +245,27 @@ export default function EditorGroup({
         }}
       >
         {activeFile ? (
-          isProblemHtml ? (
+          isProfileHtml ? (
+            profileHtmlViewMode ? (
+              <ProfileViewer 
+                html={files[activeFile] || ''} 
+                css={files['style.css'] || ''}
+              />
+            ) : (
+              <MonacoEditor
+                key={`${group.id}-${activeFile}`}
+                value={files[activeFile] || ''}
+                language="html"
+                onChange={(value) => onEditorChange(value, group.id)}
+                onMount={(editor) => onEditorMount(editor, group.id)}
+              />
+            )
+          ) : isProblemHtml ? (
             problemHtmlViewMode ? (
-              <ProblemViewer html={files[activeFile] || ''} />
+              <ProblemViewer 
+                html={files[activeFile] || ''} 
+                css={files['style.css'] || ''}
+              />
             ) : (
               <MonacoEditor
                 key={`${group.id}-${activeFile}`}

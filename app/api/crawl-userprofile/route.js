@@ -122,7 +122,7 @@ export async function POST(request) {
       margin-bottom: 20px;
     }
     h2 {
-      color: #4ec9b0;
+      color: #2d8474;
       margin-top: 30px;
       border-bottom: 1px solid #3e3e42;
       padding-bottom: 5px;
@@ -186,7 +186,7 @@ export async function POST(request) {
       margin-bottom: 8px;
     }
     .rating-value {
-      color: #4ec9b0;
+      color: #cccccc;
       font-size: 20px;
       font-weight: 600;
     }

@@ -3,9 +3,9 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * 문제 HTML 미리보기 컴포넌트
+ * 프로필 HTML 미리보기 컴포넌트
  */
-export default function ProblemViewer({ html, css }) {
+export default function ProfileViewer({ html, css }) {
   const containerRef = useRef(null);
 
   // HTML에서 head 내부의 style 태그 추출

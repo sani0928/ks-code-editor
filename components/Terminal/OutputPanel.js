@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { PiCopySimple } from 'react-icons/pi';
+import { PiCopySimple, PiCaretDown, PiCaretUp } from 'react-icons/pi';
 import MusicPlayer from './MusicPlayer';
 
 /**
@@ -10,10 +10,30 @@ import MusicPlayer from './MusicPlayer';
 export default function OutputPanel({ 
   output, 
   isRunning, 
-  onRunCode 
+  onRunCode,
+  onCollapseChange,
+  outputStatus
 }) {
   const [currentTime, setCurrentTime] = useState('');
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const outputRef = useRef(null);
+
+  // 버튼 색상 결정
+  const getButtonColor = () => {
+    if (isRunning) return 'var(--accent-color)'; // 실행 중일 때는 기본 색상
+    if (outputStatus === 'success') return '#27ae60'; // 진한 초록색 (성공)
+    if (outputStatus === 'error') return '#c0392b'; // 진한 빨간색 (에러)
+    return 'var(--accent-color)'; // 기본 색상
+  };
+
+  // 접기/펼치기 토글
+  const handleToggleCollapse = () => {
+    const newCollapsed = !isCollapsed;
+    setIsCollapsed(newCollapsed);
+    if (onCollapseChange) {
+      onCollapseChange(newCollapsed);
+    }
+  };
 
   useEffect(() => {
     const updateTime = () => {
@@ -96,8 +116,7 @@ export default function OutputPanel({
       >
         <div style={{
           padding: '4px 8px',
-          cursor: 'pointer',
-          borderRadius: '3px',
+          borderRadius: '5px',
           fontWeight: 500,
           backgroundColor: 'var(--bg-tertiary)',
         }}>
@@ -112,40 +131,49 @@ export default function OutputPanel({
             backgroundColor: 'transparent',
             color: output ? 'var(--text-primary)' : 'var(--text-secondary)',
             border: 'none',
-            borderRadius: '3px',
+            borderRadius: '5px',
             cursor: output ? 'pointer' : 'default',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '14px',
-            opacity: output ? 1 : 0.5,
+            opacity: output ? 1 : 0.3,
             transition: 'color 0.2s'
           }}
-          title="OUTPUT 복사"
+          title="출력 복사"
         >
           <PiCopySimple />
         </button>
         <button
           style={{
             padding: '4px 10px',
-            backgroundColor: 'var(--accent-color)',
+            backgroundColor: getButtonColor(),
             color: 'var(--button-text)',
             border: 'none',
-            borderRadius: '3px',
+            borderRadius: '5px',
             cursor: isRunning ? 'not-allowed' : 'pointer',
             fontSize: '10px',
-            opacity: isRunning ? 0.6 : 1
+            opacity: isRunning ? 0.6 : 1,
+            transition: 'background-color 0.3s'
           }}
           onClick={onRunCode}
           disabled={isRunning}
           onMouseEnter={(e) => {
             if (!isRunning) {
-              e.currentTarget.style.backgroundColor = 'var(--button-hover-bg)';
+              const currentColor = getButtonColor();
+              // 호버 시 약간 어둡게
+              if (currentColor === '#27ae60') {
+                e.currentTarget.style.backgroundColor = '#229954';
+              } else if (currentColor === '#c0392b') {
+                e.currentTarget.style.backgroundColor = '#a93226';
+              } else {
+                e.currentTarget.style.backgroundColor = 'var(--button-hover-bg)';
+              }
             }
           }}
           onMouseLeave={(e) => {
             if (!isRunning) {
-              e.currentTarget.style.backgroundColor = 'var(--accent-color)';
+              e.currentTarget.style.backgroundColor = getButtonColor();
             }
           }}
         >
@@ -173,23 +201,47 @@ export default function OutputPanel({
           }}>
             {currentTime}
           </div>
+          <button
+            onClick={handleToggleCollapse}
+            style={{
+              padding: '4px 6px',
+              backgroundColor: 'transparent',
+              color: 'var(--text-primary)',
+              border: 'none',
+              outline: 'none',
+              cursor: 'default',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              lineHeight: '1',
+              minWidth: '26px',
+              minHeight: '22px',
+              boxSizing: 'border-box'
+            }}
+            title={isCollapsed ? '펼치기' : '접기'}
+          >
+            {isCollapsed ? <PiCaretUp /> : <PiCaretDown />}
+          </button>
         </div>
       </div>
-      <div
-        ref={outputRef}
-        style={{
-          flex: 1,
-          padding: '10px',
-          overflowY: 'auto',
-          backgroundColor: 'var(--bg-primary)',
-          fontFamily: "'Consolas', 'Courier New', monospace",
-          fontSize: '13px',
-          color: 'var(--text-primary)',
-          whiteSpace: 'pre-wrap',
-          wordWrap: 'break-word'
-        }}
-        dangerouslySetInnerHTML={{ __html: output || '출력이 여기에 표시됩니다...' }}
-      />
+      {!isCollapsed && (
+        <div
+          ref={outputRef}
+          style={{
+            flex: 1,
+            padding: '10px',
+            overflowY: 'auto',
+            backgroundColor: 'var(--bg-primary)',
+            fontFamily: "'Consolas', 'Courier New', monospace",
+            fontSize: '13px',
+            color: 'var(--text-primary)',
+            whiteSpace: 'pre-wrap',
+            wordWrap: 'break-word'
+          }}
+          dangerouslySetInnerHTML={{ __html: output || '출력이 여기에 표시됩니다...' }}
+        />
+      )}
     </div>
   );
 }

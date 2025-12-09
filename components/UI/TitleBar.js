@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 /**
  * 상단 타이틀 바 컴포넌트
  */
@@ -18,6 +20,63 @@ export default function TitleBar({
   currentUserId
 }) {
   const isSameProblem = problemNumber.trim() === currentProblemNumber;
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // 전체화면 상태 감지
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    // Safari 지원
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
+  // 전체화면 토글 함수
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      // 전체화면 진입
+      const element = document.documentElement;
+      if (element.requestFullscreen) {
+        element.requestFullscreen().catch(err => {
+          console.error('전체화면 진입 실패:', err);
+        });
+      } else if (element.webkitRequestFullscreen) {
+        // Safari
+        element.webkitRequestFullscreen();
+      } else if (element.mozRequestFullScreen) {
+        // Firefox
+        element.mozRequestFullScreen();
+      } else if (element.msRequestFullscreen) {
+        // IE/Edge
+        element.msRequestFullscreen();
+      }
+    } else {
+      // 전체화면 종료
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        // Safari
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        // Firefox
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        // IE/Edge
+        document.msExitFullscreen();
+      }
+    }
+  };
 
   return (
     <div style={{
@@ -55,7 +114,7 @@ export default function TitleBar({
             padding: '2px 8px',
             backgroundColor: 'var(--bg-primary)',
             border: '1px solid var(--border-color)',
-            borderRadius: '3px',
+            borderRadius: '5px',
             color: 'var(--text-primary)',
             fontSize: '12px'
           }}
@@ -69,8 +128,8 @@ export default function TitleBar({
             backgroundColor: 'var(--button-load-bg)',
             color: 'var(--button-text)',
             border: 'none',
-            borderRadius: '3px',
-            cursor: isLoadingProfile || !userId.trim() ? 'not-allowed' : 'pointer',
+            borderRadius: '5px',
+            cursor: isLoadingProfile || !userId.trim() ? 'default' : 'pointer',
             fontSize: '11px',
             fontWeight: 500,
             opacity: isLoadingProfile || !userId.trim() ? 0.5 : 1
@@ -79,15 +138,25 @@ export default function TitleBar({
           {isLoadingProfile ? '가져오는 중...' : '프로필 가져오기'}
         </button>
       </div>
-      <div style={{
-        position: 'absolute',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        fontSize: '12px',
-        color: 'var(--text-primary)',
-        whiteSpace: 'nowrap',
-        pointerEvents: 'none'
-      }}>
+      <div
+        onClick={handleToggleFullscreen}
+        style={{
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          fontSize: '12px',
+          color: 'var(--text-primary)',
+          whiteSpace: 'nowrap',
+          transition: 'color 0.7s'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = 'var(--accent-color)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = 'var(--text-primary)';
+        }}
+        title={isFullscreen ? '전체화면 종료' : '전체화면'}
+      >
         KS Code Editor v1.1
       </div>
       <div style={{
@@ -113,7 +182,7 @@ export default function TitleBar({
             padding: '2px 8px',
             backgroundColor: 'var(--bg-primary)',
             border: '1px solid var(--border-color)',
-            borderRadius: '3px',
+            borderRadius: '5px',
             color: 'var(--text-primary)',
             fontSize: '12px'
           }}
@@ -127,11 +196,11 @@ export default function TitleBar({
             backgroundColor: isSameProblem ? 'var(--bg-secondary)' : 'var(--button-load-bg)',
             color: 'var(--button-text)',
             border: 'none',
-            borderRadius: '3px',
-            cursor: isSameProblem ? 'not-allowed' : 'pointer',
+            borderRadius: '5px',
+            cursor: (isLoadingProblem || isSameProblem) ? 'default' : 'pointer',
             fontSize: '11px',
             fontWeight: 500,
-            opacity: isSameProblem ? 0.5 : 1
+            opacity: (isLoadingProblem || isSameProblem) ? 0.5 : 1
           }}
         >
           {isLoadingProblem ? '가져오는 중...' : '문제 가져오기'}
@@ -145,7 +214,7 @@ export default function TitleBar({
             backgroundColor: 'var(--accent-color)',
             color: 'var(--button-text)',
             border: 'none',
-            borderRadius: '3px',
+            borderRadius: '5px',
             cursor: 'pointer',
             fontSize: '11px',
             fontWeight: 500

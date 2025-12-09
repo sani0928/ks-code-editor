@@ -86,7 +86,7 @@ export default function DraggableTab({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: '3px',
+          borderRadius: '5px',
           pointerEvents: 'auto',
           cursor: 'pointer'
         }}

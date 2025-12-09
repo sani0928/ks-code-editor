@@ -20,6 +20,9 @@ export default function GroupResizer({ leftGroupId, rightGroupId, onResize }) {
     (e) => {
       if (!isResizingRef.current) return;
 
+      // 드래그 중에는 항상 col-resize 커서 유지
+      document.body.style.cursor = "col-resize";
+
       // requestAnimationFrame으로 업데이트 최적화 (60fps로 제한)
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
@@ -72,11 +75,6 @@ export default function GroupResizer({ leftGroupId, rightGroupId, onResize }) {
       document.body.style.userSelect = "";
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
-
-      // 리사이징 종료 시 iframe 이벤트 다시 활성화
-      document.querySelectorAll("iframe").forEach((iframe) => {
-        iframe.style.pointerEvents = "auto";
-      });
     }
   }, [handleMouseMove]);
 
@@ -87,11 +85,6 @@ export default function GroupResizer({ leftGroupId, rightGroupId, onResize }) {
       isResizingRef.current = true;
       document.body.style.cursor = "col-resize";
       document.body.style.userSelect = "none";
-
-      // 리사이징 중 iframe이 마우스 이벤트를 가로채는 것을 방지
-      document.querySelectorAll("iframe").forEach((iframe) => {
-        iframe.style.pointerEvents = "none";
-      });
 
       // mousedown 시에만 이벤트 리스너 등록
       window.addEventListener("mousemove", handleMouseMove);

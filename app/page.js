@@ -45,6 +45,7 @@ export default function Home() {
 
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
+  const [outputStatus, setOutputStatus] = useState(null); // 'success' | 'error' | null
   const [cursorPosition, setCursorPosition] = useState("Ln 1, Col 1");
   const [pyodide, setPyodide] = useState(null);
   const [isPyodideReady, setIsPyodideReady] = useState(false);
@@ -53,12 +54,17 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingProblem, setIsLoadingProblem] = useState(false);
   const [problemHtmlViewMode, setProblemHtmlViewMode] = useState(true);
+  const [profileHtmlViewMode, setProfileHtmlViewMode] = useState(true);
   const [userId, setUserId] = useState("");
   const [currentUserId, setCurrentUserId] = useState("");
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   const editorRefs = useRef({});
   const isResizingRef = useRef(false);
+  const previousTerminalHeightRef = useRef(null);
+
+  // 터미널 접기 상태 관리
+  const [isTerminalCollapsed, setIsTerminalCollapsed] = useState(false);
 
   // 에디터 그룹 관리
   const [editorGroups, setEditorGroups] = useState([
@@ -93,6 +99,35 @@ export default function Home() {
       }
     }
   }, []);
+
+  // localStorage 'kscode_files' 변화 감지하여 outputStatus 초기화
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleStorageChange = (e) => {
+      // 다른 탭에서 'kscode_files'가 변경된 경우
+      if (e.key === 'kscode_files' && !isRunning) {
+        setOutputStatus(null); // 기본 색상으로 초기화
+      }
+    };
+
+    // 같은 탭에서 localStorage 변경 감지를 위한 커스텀 이벤트
+    const handleCustomStorageChange = (e) => {
+      if (e.detail?.key === 'kscode_files' && !isRunning) {
+        setOutputStatus(null); // 기본 색상으로 초기화
+      }
+    };
+
+    // storage 이벤트 리스너 (다른 탭에서 변경된 경우)
+    window.addEventListener('storage', handleStorageChange);
+    // 커스텀 이벤트 리스너 (같은 탭에서 변경된 경우)
+    window.addEventListener('localStorageChange', handleCustomStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('localStorageChange', handleCustomStorageChange);
+    };
+  }, [isRunning]);
 
   // 문제 번호가 있고 HTML 파일이 없으면 자동으로 문제 불러오기
   useEffect(() => {
@@ -382,10 +417,28 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeGroupId, editorGroups, files, updateFile, handleDownloadFile]);
 
+  // 터미널 접기/펼치기 핸들러
+  const handleTerminalCollapse = useCallback((collapsed) => {
+    setIsTerminalCollapsed(collapsed);
+    const terminal = document.getElementById("terminal-container");
+    if (!terminal) return;
+
+    if (collapsed) {
+      // 닫힐 때: 현재 높이를 저장하고 헤더 높이(30px)로 설정
+      const currentHeight = parseInt(terminal.style.height) || 300;
+      previousTerminalHeightRef.current = currentHeight;
+      terminal.style.height = "30px";
+    } else {
+      // 열릴 때: 저장된 높이로 복원 (없으면 300px)
+      const restoredHeight = previousTerminalHeightRef.current || 300;
+      terminal.style.height = restoredHeight + "px";
+    }
+  }, []);
+
   // 터미널 리사이즈
   useEffect(() => {
     const handleMouseMove = (e) => {
-      if (!isResizingRef.current) return;
+      if (!isResizingRef.current || isTerminalCollapsed) return;
       const container = document.getElementById("editor-container");
       if (!container) return;
       const containerHeight = container.clientHeight;
@@ -403,7 +456,11 @@ export default function Home() {
     };
 
     const handleMouseUp = () => {
-      isResizingRef.current = false;
+      if (isResizingRef.current) {
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        isResizingRef.current = false;
+      }
     };
 
     window.addEventListener("mousemove", handleMouseMove);
@@ -413,7 +470,7 @@ export default function Home() {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, []);
+  }, [isTerminalCollapsed]);
 
   const handleOpenFile = (filename) => {
     openFile(filename);
@@ -761,6 +818,7 @@ export default function Home() {
     const activeGroup = editorGroups.find((g) => g.id === activeGroupId);
     if (!activeGroup || !activeGroup.activeTab) {
       setOutput("실행할 파일이 없습니다.");
+      setOutputStatus(null);
       return;
     }
 
@@ -769,6 +827,7 @@ export default function Home() {
 
     if (!code.trim()) {
       setOutput("실행할 코드가 없습니다.");
+      setOutputStatus(null);
       return;
     }
 
@@ -777,20 +836,24 @@ export default function Home() {
 
     setIsRunning(true);
     setOutput("");
+    setOutputStatus(null); // 실행 시작 시 초기화
 
     try {
       if (language === "python") {
-        await runPythonCode(code, inputText, pyodide);
         const result = await runPythonCode(code, inputText, pyodide);
         setOutput(escapeHtml(result));
+        setOutputStatus('success'); // 성공
       } else if (language === "javascript") {
         const result = runJavaScriptCode(code, inputText);
         setOutput(escapeHtml(result));
+        setOutputStatus('success'); // 성공
       } else {
         setOutput(`${language} 언어는 실행을 지원하지 않습니다.`);
+        setOutputStatus(null);
       }
     } catch (error) {
       setOutput(`<div class="output-error">${escapeHtml(error.message)}</div>`);
+      setOutputStatus('error'); // 에러
     } finally {
       setIsRunning(false);
     }
@@ -1110,17 +1173,20 @@ export default function Home() {
   const handleTabDoubleClick = (filename) => {
     if (filename === "style.css") {
       handleResetTheme();
+    } else if (filename === "profile.html") {
+      setProfileHtmlViewMode(!profileHtmlViewMode);
     } else if (filename && filename.endsWith(".html")) {
       setProblemHtmlViewMode(!problemHtmlViewMode);
     }
   };
 
   const handleResizeStart = () => {
+    // 닫혀있을 때는 리사이즈 비활성화
+    if (isTerminalCollapsed) return;
+    
     isResizingRef.current = true;
-    // 리사이징 중 iframe이 마우스 이벤트를 가로채는 것을 방지
-    document.querySelectorAll("iframe").forEach((iframe) => {
-      iframe.style.pointerEvents = "none";
-    });
+    document.body.style.cursor = "ns-resize";
+    document.body.style.userSelect = "none";
   };
 
   const activeGroup = editorGroups.find((g) => g.id === activeGroupId);
@@ -1245,6 +1311,7 @@ export default function Home() {
                   onEditorClick={handleEditorClick}
                   isActive={activeGroupId === group.id}
                   problemHtmlViewMode={problemHtmlViewMode}
+                  profileHtmlViewMode={profileHtmlViewMode}
                   isNewGroupDropZoneVisible={editorGroups.length === 1}
                 />
                 {/* 두 그룹 사이에 리사이저 추가 */}
@@ -1263,8 +1330,9 @@ export default function Home() {
             style={{
               height: "4px",
               backgroundColor: "var(--border-color)",
-              cursor: "ns-resize",
+              cursor: isTerminalCollapsed ? "default" : "ns-resize",
               position: "relative",
+              pointerEvents: isTerminalCollapsed ? "none" : "auto",
             }}
             id="resize-handle"
             onMouseDown={handleResizeStart}
@@ -1284,6 +1352,8 @@ export default function Home() {
               output={output}
               isRunning={isRunning}
               onRunCode={handleRunCode}
+              onCollapseChange={handleTerminalCollapse}
+              outputStatus={outputStatus}
             />
           </div>
         </div>
