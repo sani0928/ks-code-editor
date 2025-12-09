@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 /**
  * 출력 패널 컴포넌트
@@ -11,6 +11,7 @@ export default function OutputPanel({
   onRunCode 
 }) {
   const [currentTime, setCurrentTime] = useState('');
+  const outputRef = useRef(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -30,25 +31,41 @@ export default function OutputPanel({
     return () => clearInterval(interval);
   }, []);
 
+  // 출력이 업데이트될 때마다 스크롤을 맨 아래로 이동
+  useEffect(() => {
+    if (outputRef.current) {
+      outputRef.current.scrollTop = outputRef.current.scrollHeight;
+    }
+  }, [output]);
+
   return (
     <div style={{
-      height: '300px',
+      height: '100%',
       display: 'flex',
       flexDirection: 'column',
       backgroundColor: 'var(--bg-primary)',
-      borderTop: '1px solid var(--border-color)'
+      borderTop: '1px solid var(--border-color)',
+      minHeight: 0,
+      overflow: 'hidden'
     }}>
-      <div style={{
-        height: '30px',
-        backgroundColor: 'var(--bg-tertiary)',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 10px',
-        borderBottom: '1px solid var(--border-color)',
-        fontSize: '12px',
-        color: 'var(--text-primary)',
-        gap: '15px'
-      }}>
+      <div 
+        style={{
+          height: '30px',
+          backgroundColor: 'var(--bg-tertiary)',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 10px',
+          borderBottom: '1px solid var(--border-color)',
+          fontSize: '12px',
+          color: 'var(--text-primary)',
+          gap: '15px',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          MozUserSelect: 'none',
+          msUserSelect: 'none'
+        }}
+        onDragStart={(e) => e.preventDefault()}
+      >
         <div style={{
           padding: '4px 8px',
           cursor: 'pointer',
@@ -102,6 +119,7 @@ export default function OutputPanel({
         </div>
       </div>
       <div
+        ref={outputRef}
         style={{
           flex: 1,
           padding: '10px',

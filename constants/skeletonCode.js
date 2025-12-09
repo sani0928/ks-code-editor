@@ -121,10 +121,10 @@ KS Code Editor는 백준(BOJ) 문제를 편리하게 풀 수 있도록 도와주
    🎨 사용 가능한 CSS 변수:
    
    [배경색]
-   - --bg-primary: 메인 배경색 (에디터 영역, 터미널)
+   - --bg-primary: 메인 배경색
    - --bg-secondary: 사이드바 배경색
    - --bg-tertiary: 탭 바, 헤더 배경색
-   - --editor-bg: 에디터 내부 배경색 (Monaco Editor)
+   - --editor-bg: 에디터 내부 배경색
    
    [텍스트 색상]
    - --text-primary: 주요 텍스트 색상
@@ -139,7 +139,7 @@ KS Code Editor는 백준(BOJ) 문제를 편리하게 풀 수 있도록 도와주
    
    [강조 색상]
    - --accent-color: 강조 색상 (버튼, 상태바, 링크 등)
-   - --file-special-color: 특수 파일 색상 (problem.html, input.txt)
+   - --file-special-color: 특수 파일 색상 (profile.html, problem.html, input.txt, style.css)
    
    [탭]
    - --tab-hover-bg: 탭 호버 배경색
@@ -147,6 +147,9 @@ KS Code Editor는 백준(BOJ) 문제를 편리하게 풀 수 있도록 도와주
    - --tab-close-hover-color: 탭 닫기 버튼 호버 텍스트 색상
    - --tab-drag-indicator-color: 탭 드래그 시 표시되는 인디케이터 색상
    - --tab-drag-indicator-width: 탭 드래그 인디케이터 너비 (기본값: 2px)
+   
+   [슬라이더]
+   - --slider-indicator-color: 그룹 너비 슬라이드 호버 시 인디케이터 색상
    
    [파일 탐색기]
    - --file-item-hover-bg: 파일 아이템 호버 배경색
@@ -191,6 +194,9 @@ KS Code Editor는 백준(BOJ) 문제를 편리하게 풀 수 있도록 도와주
       --tab-close-hover-color: #cccccc;
       --tab-drag-indicator-color: #007acc;
       --tab-drag-indicator-width: 2px;
+      
+      /* 슬라이더 */
+      --slider-indicator-color: #007acc;
       
       /* 파일 탐색기 */
       --file-item-hover-bg: #2a2d2e;

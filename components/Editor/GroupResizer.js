@@ -96,7 +96,7 @@ export default function GroupResizer({
         zIndex: 10,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = 'var(--accent-color)';
+        e.currentTarget.style.backgroundColor = 'var(--slider-indicator-color, var(--accent-color))';
       }}
       onMouseLeave={(e) => {
         if (!isResizingRef.current) {
