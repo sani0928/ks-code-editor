@@ -1,4 +1,5 @@
 import './globals.css';
+import { Analytics } from '@vercel/analytics/next';
 import DndProvider from '../components/Providers/DndProvider';
 import { getSiteUrl } from '../lib/env';
 
@@ -108,6 +109,7 @@ export default function RootLayout({ children }) {
       <body>
         <DndProvider>
           {children}
+          <Analytics />
         </DndProvider>
       </body>
     </html>
