@@ -1,0 +1,275 @@
+export async function POST(request) {
+  try {
+    const { handle } = await request.json();
+
+    if (!handle) {
+      return Response.json({ error: 'User handle is required' }, { status: 400 });
+    }
+
+    // solved.ac API로 사용자 정보 가져오기
+    const response = await fetch(`https://solved.ac/api/v3/user/show?handle=${encodeURIComponent(handle)}`);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return Response.json({ error: 'User not found' }, { status: 404 });
+      }
+      return Response.json({ error: 'Failed to fetch user profile' }, { status: response.status });
+    }
+
+    const userData = await response.json();
+
+    // 티어 레벨을 문자열로 변환
+    function convertTierLevel(level) {
+      if (!level) return null;
+      
+      const romanNumerals = { 1: "V", 2: "IV", 3: "III", 4: "II", 5: "I" };
+      let tierName, tierLevel;
+      
+      if (level <= 5) {
+        tierName = "Bronze";
+        tierLevel = level;
+      } else if (level <= 10) {
+        tierName = "Silver";
+        tierLevel = level - 5;
+      } else if (level <= 15) {
+        tierName = "Gold";
+        tierLevel = level - 10;
+      } else if (level <= 20) {
+        tierName = "Platinum";
+        tierLevel = level - 15;
+      } else if (level <= 25) {
+        tierName = "Diamond";
+        tierLevel = level - 20;
+      } else if (level <= 30) {
+        tierName = "Ruby";
+        tierLevel = level - 25;
+      } else {
+        return "Master";
+      }
+      
+      return `${tierName} ${romanNumerals[tierLevel]}`;
+    }
+
+    // 티어별 색상 반환 함수
+    function getTierColor(tierName) {
+      if (!tierName) return '#007acc';
+      
+      const tier = tierName.toLowerCase();
+      if (tier.includes('bronze')) return '#AD5600'; // 브론즈 - 황동색
+      if (tier.includes('silver')) return '#435F7A'; // 실버 - 은색
+      if (tier.includes('gold')) return '#EC9A00'; // 골드 - 금색
+      if (tier.includes('platinum')) return '#27E2A4'; // 플래티넘 - 청록색
+      if (tier.includes('diamond')) return '#00B4FC'; // 다이아몬드 - 파란색
+      if (tier.includes('ruby')) return '#FF0062'; // 루비 - 분홍색
+      if (tier.includes('master')) return '#000000'; // 마스터 - 검은색
+      
+      return '#007acc'; // 기본 색상
+    }
+
+    // HTML 이스케이프 함수
+    function escapeHtml(text) {
+      if (!text) return '';
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // 날짜 포맷팅
+    function formatDate(dateString) {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('ko-KR', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    }
+
+    // 숫자 포맷팅
+    function formatNumber(num) {
+      if (num === null || num === undefined) return '-';
+      return num.toLocaleString('ko-KR');
+    }
+
+    const tier = convertTierLevel(userData.tier);
+    const tierColor = getTierColor(tier);
+
+    // profile.html 내용 생성
+    let profileHtml = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(userData.handle)} - 프로필</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #1e1e1e;
+      color: #cccccc;
+    }
+    h1 {
+      border-bottom: 2px solid #3e3e42;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    h2 {
+      color: #4ec9b0;
+      margin-top: 30px;
+      border-bottom: 1px solid #3e3e42;
+      padding-bottom: 5px;
+    }
+    .tier {
+      display: inline-block;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 4px;
+      font-size: 16px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    .bio {
+      color: #858585;
+      font-size: 14px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .profile-info {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .info-item {
+      background-color: #252526;
+      padding: 15px;
+      border-radius: 5px;
+      border: 1px solid #3e3e42;
+    }
+    .info-label {
+      color: #858585;
+      font-size: 12px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .info-value {
+      color: #cccccc;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .rating-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .rating-item {
+      background-color: #252526;
+      padding: 15px;
+      border-radius: 5px;
+      border: 1px solid #3e3e42;
+      text-align: center;
+    }
+    .rating-label {
+      color: #858585;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .rating-value {
+      color: #4ec9b0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="color: ${tierColor};">${escapeHtml(userData.handle)}</h1>
+  ${tier ? `<div class="tier" style="background-color: ${tierColor};">${escapeHtml(tier)}</div>` : ''}
+  <div class="bio">${userData.bio && userData.bio.trim() ? escapeHtml(userData.bio) : '자기소개가 없습니다.'}</div>
+  
+  <div class="profile-info">
+    <div class="info-item">
+      <div class="info-label">전체 레이팅</div>
+      <div class="info-value">${formatNumber(userData.rating)}</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">전체 순위</div>
+      <div class="info-value">${formatNumber(userData.rank)}위</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">Class</div>
+      <div class="info-value">${userData.class !== null && userData.class !== undefined ? userData.class : '-'}</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">해결한 문제 수</div>
+      <div class="info-value">${formatNumber(userData.solvedCount)}개</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">최대 연속 해결 일수</div>
+      <div class="info-value">${formatNumber(userData.maxStreak)}일</div>
+    </div>
+    <div class="info-item">
+      <div class="info-label">가입일</div>
+      <div class="info-value">${formatDate(userData.joinedAt)}</div>
+    </div>
+  </div>
+
+  <h2>전체 레이팅 세부 정보</h2>
+  <div class="rating-details">
+    <div class="rating-item">
+      <div class="rating-label">문제 해결</div>
+      <div class="rating-value">${formatNumber(userData.ratingByProblemsSum)}</div>
+    </div>
+    <div class="rating-item">
+      <div class="rating-label">클래스</div>
+      <div class="rating-value">${formatNumber(userData.ratingByClass)}</div>
+    </div>
+    <div class="rating-item">
+      <div class="rating-label">해결한 문제 수</div>
+      <div class="rating-value">${formatNumber(userData.ratingBySolvedCount)}</div>
+    </div>
+    <div class="rating-item">
+      <div class="rating-label">투표 수</div>
+      <div class="rating-value">${formatNumber(userData.ratingByVoteCount)}</div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    return Response.json({
+      success: true,
+      profileHtml: profileHtml,
+      profileInfo: {
+        handle: userData.handle,
+        joinedAt: userData.joinedAt,
+        rank: userData.rank,
+        solvedCount: userData.solvedCount,
+        maxStreak: userData.maxStreak,
+        class: userData.class,
+        tier: tier,
+        rating: userData.rating,
+        ratingByProblemsSum: userData.ratingByProblemsSum,
+        ratingByClass: userData.ratingByClass,
+        ratingBySolvedCount: userData.ratingBySolvedCount,
+        ratingByVoteCount: userData.ratingByVoteCount
+      }
+    });
+
+  } catch (error) {
+    console.error('User profile crawling error:', error);
+    return Response.json(
+      { error: 'Failed to fetch user profile', message: error.message },
+      { status: 500 }
+    );
+  }
+}
+
