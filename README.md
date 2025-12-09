@@ -1,8 +1,9 @@
 # KS Code Editor
 [https://ks-code-editor.com](https://ks-code-editor.com)
+
 백준(BOJ) 문제 풀이를 위한 웹 기반 코드 에디터입니다. Monaco Editor를 기반으로 하며, 문제 정보 자동 불러오기, 코드 실행, 프로필 조회 등 다양한 기능을 제공합니다.
 ## 주요 기능
----
+
 ### 에디터 기능
 - **Monaco Editor 기반**: VS Code와 동일한 편집 경험
 - **다중 파일 편집**: 여러 파일을 동시에 편집할 수 있는 탭 시스템
@@ -36,7 +37,7 @@
 - **localStorage 기반**: 브라우저 localStorage를 활용한 데이터 영속성
 
 ## 시작하기
----
+
 ### 필수 요구사항
 - Node.js 18.0 이상
 - npm 또는 yarn
@@ -70,7 +71,7 @@ npm start
 브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 사용할 수 있습니다.
 
 ## 키보드 단축키
----
+
 ### 편집 단축키
 - `Ctrl + Z`: 실행 취소 (Undo)
 - `Ctrl + Shift + Z`: 다시 실행 (Redo)
@@ -80,7 +81,7 @@ npm start
 - `Ctrl + S`: 코드 파일 다운로드 (코드 파일만 해당)
 
 ## 사용 방법
----
+
 ### 1. 문제 불러오기
 1. 상단 헤더의 문제 번호 입력란에 백준 문제 번호 입력
 2. "문제 가져오기" 버튼 클릭
@@ -111,7 +112,7 @@ npm start
 3. 변경사항이 자동으로 적용됨
 
 ## 기술 스택
----
+
 - **프레임워크**: [Next.js](https://nextjs.org/) 14.0
 - **UI 라이브러리**: [React](https://react.dev/) 18.2
 - **에디터**: [Monaco Editor](https://microsoft.github.io/monaco-editor/) (VS Code 에디터)
@@ -120,7 +121,7 @@ npm start
 - **HTML 파싱**: [cheerio](https://cheerio.js.org/)
 
 ## 지원 언어
----
+
 ### 코드 실행
 - Python (Pyodide)
 - JavaScript (브라우저 네이티브)
@@ -134,10 +135,10 @@ npm start
 - 기타 다양한 언어 지원
 
 ## 라이선스
----
+
 이 프로젝트는 MIT 라이선스를 따릅니다.
 
 ## 문의
----
+
 문의사항이나 피드백이 있으시면 아래 이메일로 연락해주세요.
 > **이메일**: [kksan12@gmail.com](mailto:kksan12@gmail.com)
