@@ -6,17 +6,6 @@ import { useRef } from 'react';
 // Monaco Editor를 동적으로 로드 (SSR 방지)
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
-  // loading: () => (
-  //   <div style={{ 
-  //     flex: 1, 
-  //     display: 'flex', 
-  //     alignItems: 'center', 
-  //     justifyContent: 'center', 
-  //     color: 'var(--text-primary)' 
-  //   }}>
-  //     에디터 로딩 중...
-  //   </div>
-  // )
 });
 
 /**

@@ -89,10 +89,6 @@ export async function POST(request) {
         const encoder = new TextEncoder();
         
         try {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('RunnableWithMessageHistory.stream() started');
-          }
-
           // RunnableWithMessageHistory의 공식적인 stream 메서드 사용
           const streamResponse = await chainWithHistory.stream(
             { question: currentUserMessage.content },

@@ -1,8 +1,16 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { loadProblemInfo, loadProfileInfo, loadChatbotMessages, saveChatbotMessages, clearChatbotMessages, saveChatbotSettings, loadChatbotSettings } from '../../lib/storage';
 import { darkenColor } from '../../lib/colorUtils';
+import {
+  loadProblemInfo,
+  loadProfileInfo,
+  loadChatbotMessages,
+  saveChatbotMessages,
+  clearChatbotMessages,
+  saveChatbotSettings,
+  loadChatbotSettings
+} from '../../lib/storage';
 
 /**
  * 챗봇 뷰어 컴포넌트
@@ -94,13 +102,15 @@ export default function ChatbotViewer() {
   // 시스템 프롬프트 생성 (파라미터 기반 - 실제 사용)
   const createSystemPromptWithInfo = (currentProblemInfo, currentProfileInfo, currentLanguage) => {
     let systemPrompt = 
-    `당신은 알고리즘 문제 풀이를 도와주는 AI이며 이름은 옜다정답입니다.
-    사용자가 문제를 이해하고 설명해주며 해결할 수 있도록 이끄는 것이 당신의 최우선 목표입니다.             
+    `당신은 백준 알고리즘 문제 풀이를 도와주는 AI이며 이름은 옜다정답입니다.
+    당신의 최우선 목표는 단순히 정답을 제공하는 것이 아닌, 사용자가 문제를 이해하고 해결할 수 있도록 이끄는 것입니다.            
     사용자 프로필 정보와 문제 정보를 바탕으로 사용자 수준에 적절한 답변을 해주세요.
     사용자 티어와 문제 난이도(티어)를 고려하여 답변을 해주세요.
+    사용자가 다른 백준 문제를 요청하면 문제 정보를 제공해주세요.
     코드 블록 외에는 볼드, 섹션을 포함한 마크다운 형식을 절대 사용하지 마세요. 일반 텍스트로만 작성해주세요.
     질문이 알고리즘 문제와 관련이 있는지 구별하여 적절한 답변을 해주세요. (알고리즘과 너무 멀리 떨어진 질문은 온건하게 거절하세요.)
-    존댓말로 답변해주세요.
+    귀찮은 말투로 짜증내며 답변해주세요.
+    답변을 작성할 때는 적절한 줄바꿈, 긴 설명은 여러 문단으로 나누는 등 가독성을 고려해 작성해주세요.
     `;
 
     // 사용자 정보 추가
@@ -122,10 +132,10 @@ export default function ChatbotViewer() {
 
     // 문제 정보 추가
     if (currentProblemInfo) {
-      systemPrompt += `## 현재 문제 정보
+      systemPrompt += `## 현재 백준 문제 정보
 - 문제 번호: ${currentProblemInfo.problemId || '정보 없음'}
 - 문제 제목: ${currentProblemInfo.title || '정보 없음'}
-- 티어: ${currentProblemInfo.tier || '정보 없음'}
+- 문제 티어: ${currentProblemInfo.tier || '정보 없음'}
 
 `;
 
@@ -172,9 +182,9 @@ ${currentProblemInfo.sampleOutputs[index]}
     if (hideAnswer) {
       systemPrompt += `## 중요 지시사항
 현재 "정답 가리기" 모드가 활성화되어 있습니다. 사용자가 직접 문제를 풀 수 있도록 도와주세요.
-- 사용자가 요구하더라도 절대 직접적인 정답 코드를 제공하지 마세요.
+- 사용자가 요구하더라도 절대 직접적인 전체 정답 코드를 제공하지 마세요. 필요 시 부분 코드만 제공해주세요.
 - 힌트와 접근 방법을 단계별로 설명해주세요.
-- 학생이 스스로 생각하고 풀 수 있도록 유도해주세요.
+- 사용자가 스스로 생각하고 풀 수 있도록 유도해주세요.
 - 알고리즘 개념과 아이디어를 설명해주세요.
 - 코드 예시를 제공할 때는 ${currentLanguage || 'Python'} 언어로 제공해주세요.
 `;
@@ -182,7 +192,7 @@ ${currentProblemInfo.sampleOutputs[index]}
       systemPrompt += `## 중요 지시사항
 사용자가 요청하면 정답 코드를 제공할 수 있습니다.
 - 사용자의 요청에 맞게 문제를 설명해주세요.
-- 사용자가 요구할 때 코드와 함께 설명해주세요.
+- 사용자가 요청 시 코드와 함께 설명해주세요.
 - 코드의 각 부분이 무엇을 하는지 설명해주세요.
 - 코드 예시를 제공할 때는 ${currentLanguage || 'Python'} 언어로 제공해주세요.
 `;
@@ -213,10 +223,11 @@ ${currentProblemInfo.sampleOutputs[index]}
     setInput('');
     setIsLoading(true);
 
-    // 사용자 메시지 추가
+    // 사용자 메시지 추가 (타임스탬프 포함)
+    const userMessageTimestamp = Date.now();
     const newMessages = [
       ...messages,
-      { role: 'user', content: userMessage }
+      { role: 'user', content: userMessage, timestamp: userMessageTimestamp }
     ];
     setMessages(newMessages);
 
@@ -224,7 +235,7 @@ ${currentProblemInfo.sampleOutputs[index]}
     const assistantMessageId = Date.now();
     setMessages([
       ...newMessages,
-      { role: 'assistant', content: '', id: assistantMessageId }
+      { role: 'assistant', content: '', id: assistantMessageId, timestamp: assistantMessageId }
     ]);
 
     try {
@@ -238,11 +249,6 @@ ${currentProblemInfo.sampleOutputs[index]}
         ...newMessages  // 이전 대화 기록 모두 포함 (user와 assistant 메시지)
       ];
       
-      // 디버깅: 전송되는 메시지 수 확인 (개발 환경에서만)
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`전송되는 메시지 수: ${messagesToSend.length}개 (시스템 프롬프트 1개 + 대화 ${newMessages.length}개)`);
-      }
-
       const response = await fetch('/api/chatbot', {
         method: 'POST',
         headers: {
@@ -367,12 +373,16 @@ ${currentProblemInfo.sampleOutputs[index]}
           }
         }
 
-        // 최종 메시지 저장 (id 제거)
+        // 최종 메시지 저장 (id 제거, timestamp 유지)
         setMessages(prev => {
           const updated = [...prev];
           const assistantIndex = updated.findIndex(msg => msg.id === assistantMessageId);
           if (assistantIndex !== -1) {
             const { id, ...messageWithoutId } = updated[assistantIndex];
+            // timestamp가 없으면 현재 시간 추가
+            if (!messageWithoutId.timestamp) {
+              messageWithoutId.timestamp = Date.now();
+            }
             updated[assistantIndex] = messageWithoutId;
           }
           return updated;
@@ -387,7 +397,8 @@ ${currentProblemInfo.sampleOutputs[index]}
             if (assistantIndex !== -1) {
               updated[assistantIndex] = {
                 role: 'assistant',
-                content: data.message
+                content: data.message,
+                timestamp: Date.now()
               };
             }
             return updated;
@@ -404,7 +415,8 @@ ${currentProblemInfo.sampleOutputs[index]}
         if (assistantIndex !== -1) {
           updated[assistantIndex] = {
             role: 'assistant',
-            content: `오류가 발생했습니다: ${error.message}`
+            content: `오류가 발생했습니다: ${error.message}`,
+            timestamp: Date.now()
           };
         }
         return updated;
@@ -445,6 +457,15 @@ ${currentProblemInfo.sampleOutputs[index]}
       e.preventDefault();
       handleSend();
     }
+  };
+
+  // 시간 포맷팅 (24시간 형식: 00:00)
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
   };
 
   // 마크다운 형식의 코드 블록 렌더링
@@ -510,6 +531,7 @@ ${currentProblemInfo.sampleOutputs[index]}
         padding: '40px',
         color: 'var(--color-text-primary)',
         textAlign: 'center',
+        userSelect: 'none',
       }}>
         <div style={{ fontSize: '18px', marginBottom: '20px', color: 'var(--color-accent-primary)' }}>
           옜다정답 AI를 사용하려면 문제와 프로필 정보가 필요합니다
@@ -523,14 +545,54 @@ ${currentProblemInfo.sampleOutputs[index]}
   }
 
   return (
-    <div style={{
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      backgroundColor: 'var(--color-bg-main)',
-      overflow: 'hidden',
-    }}>
+    <>
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
+        }
+        @keyframes dots {
+          0%, 20% {
+            content: '.';
+          }
+          40% {
+            content: '..';
+          }
+          60%, 100% {
+            content: '...';
+          }
+        }
+        @keyframes bounce {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-8px);
+          }
+        }
+      `}</style>
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        backgroundColor: 'var(--color-bg-main)',
+        overflow: 'hidden',
+      }}>
       {/* 헤더 */}
       <div style={{
         padding: '10px 15px',
@@ -551,17 +613,17 @@ ${currentProblemInfo.sampleOutputs[index]}
           <span>옜다정답 AI</span>
           {problemInfo && problemInfo.problemId && problemInfo.title && (
             <span style={{
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: 400,
               color: 'var(--color-text-secondary)',
-              paddingLeft: '10px',
+              paddingLeft: '6px',
               borderLeft: '1px solid var(--color-border-default)',
             }}>
               문제 {problemInfo.problemId}: {problemInfo.title}
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {/* 언어 선택 드롭다운 */}
           <select
             value={selectedLanguage}
@@ -647,6 +709,7 @@ ${currentProblemInfo.sampleOutputs[index]}
             textAlign: 'center',
             color: 'var(--color-text-secondary)',
             fontSize: '14px',
+            userSelect: 'none',
           }}>
             안녕하세요! 알고리즘 문제 풀이를 도와드리겠습니다.
             <br />
@@ -663,6 +726,7 @@ ${currentProblemInfo.sampleOutputs[index]}
           const isUser = message.role === 'user';
           const bubbleBg = isUser ? 'var(--color-accent-primary)' : 'var(--color-bg-card)';
           const bubbleColor = isUser ? '#ffffff' : 'var(--color-text-primary)';
+          const borderColor = isUser ? 'var(--color-accent-primary)' : 'var(--color-border-default)';
           
           return (
             <div
@@ -671,22 +735,58 @@ ${currentProblemInfo.sampleOutputs[index]}
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: isUser ? 'flex-end' : 'flex-start',
-                marginBottom: '4px',
+                marginBottom: '12px',
+                animation: 'fadeIn 0.3s ease-in',
               }}
             >
               <div style={{
-                maxWidth: '80%',
-                padding: '12px 16px',
-                borderRadius: '18px',
-                backgroundColor: bubbleBg,
-                color: bubbleColor,
-                fontSize: '14px',
-                lineHeight: '1.6',
-                wordWrap: 'break-word',
-                whiteSpace: 'pre-wrap',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                display: 'flex',
+                flexDirection: isUser ? 'row-reverse' : 'row',
+                alignItems: 'flex-end',
+                gap: '5px',
+                maxWidth: '75%',
               }}>
-                {renderMessage(message.content)}
+                <div
+                  style={{
+                    padding: '14px 18px',
+                    borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                    backgroundColor: bubbleBg,
+                    color: bubbleColor,
+                    fontSize: '14px',
+                    lineHeight: '1.6',
+                    wordWrap: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    boxShadow: isUser 
+                      ? '0 2px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1)' 
+                      : '0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05)',
+                    border: isUser ? 'none' : `1px solid ${borderColor}`,
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = isUser
+                      ? '0 4px 16px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.15)'
+                      : '0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = isUser
+                      ? '0 2px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1)'
+                      : '0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05)';
+                  }}
+                >
+                  {renderMessage(message.content)}
+                </div>
+                {message.timestamp && (
+                  <div style={{
+                    fontSize: '10px',
+                    color: 'var(--color-text-secondary)',
+                    whiteSpace: 'nowrap',
+                    userSelect: 'none',
+                  }}>
+                    {formatTime(message.timestamp)}
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -696,17 +796,23 @@ ${currentProblemInfo.sampleOutputs[index]}
           <div style={{
             display: 'flex',
             alignItems: 'flex-start',
-            marginBottom: '4px',
+            marginBottom: '12px',
           }}>
-            <div style={{
-              padding: '12px 16px',
-              borderRadius: '18px',
-              backgroundColor: 'var(--color-bg-card)',
-              color: 'var(--color-text-secondary)',
-              fontSize: '14px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            }}>
-              생각 중...
+            <div
+              style={{
+                padding: '14px 18px',
+                borderRadius: '18px 18px 18px 4px',
+                backgroundColor: 'var(--color-bg-card)',
+                color: 'var(--color-text-secondary)',
+                fontSize: '14px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05)',
+                border: '1px solid var(--color-border-default)',
+              }}
+            >
+              <span style={{ display: 'inline-block', animation: 'pulse 1.5s ease-in-out infinite' }}>
+                생각 중
+              </span>
+              <span style={{ animation: 'dots 1.5s steps(4, end) infinite' }}>...</span>
             </div>
           </div>
         )}
@@ -737,7 +843,7 @@ ${currentProblemInfo.sampleOutputs[index]}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isLoading ? "탭을 닫거나 이동하면 답변이 중단됩니다 ..." : "질문을 입력하세요 ..."}
+              placeholder={isLoading ? "탭을 닫거나 이동하면 답변이 중단됩니다..." : "질문을 입력하세요..."}
               disabled={isLoading}
               style={{
                 width: '100%',
@@ -818,11 +924,36 @@ ${currentProblemInfo.sampleOutputs[index]}
               }
             }}
           >
-            {isLoading ? '전송 중...' : '전송'}
+            {isLoading ? (
+              <span style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '3px',
+                lineHeight: '1',
+              }}>
+                {[0, 1, 2].map((index) => (
+                  <span
+                    key={index}
+                    style={{
+                      display: 'inline-block',
+                      width: '4px',
+                      height: '4px',
+                      borderRadius: '50%',
+                      backgroundColor: 'currentColor',
+                      animation: 'bounce 0.8s ease-in-out infinite',
+                      animationDelay: `${index * 0.1}s`,
+                    }}
+                  />
+                ))}
+              </span>
+            ) : (
+              '전송'
+            )}
           </button>
         </div>
       </div>
     </div>
+    </>
   );
 }
 

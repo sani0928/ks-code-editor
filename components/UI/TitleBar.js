@@ -101,7 +101,7 @@ export default function TitleBar({
       }}>
         <input
           type="text"
-          placeholder="유저 아이디"
+          placeholder="사용자 아이디"
           value={userId}
           onChange={(e) => onUserIdChange(e.target.value)}
           onKeyPress={(e) => {

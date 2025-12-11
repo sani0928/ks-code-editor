@@ -299,7 +299,7 @@ export default function MusicPlayer({ isCompact = false }) {
           e.currentTarget.style.color = 'var(--color-accent-primary)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.color = 'var(--text-primary)';
+          e.currentTarget.style.color = 'var(--color-text-primary)';
         }}
       >
         <PiSkipBack />
@@ -328,7 +328,7 @@ export default function MusicPlayer({ isCompact = false }) {
           e.currentTarget.style.color = 'var(--color-accent-primary)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.color = 'var(--text-primary)';
+          e.currentTarget.style.color = 'var(--color-text-primary)';
         }}
         title={isPlaying ? '정지' : '재생'}
       >
@@ -358,7 +358,7 @@ export default function MusicPlayer({ isCompact = false }) {
           e.currentTarget.style.color = 'var(--color-accent-primary)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.color = 'var(--text-primary)';
+          e.currentTarget.style.color = 'var(--color-text-primary)';
         }}
       >
         <PiSkipForward />

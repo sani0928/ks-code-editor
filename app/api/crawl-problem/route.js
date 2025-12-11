@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import { escapeHtml } from '../../../lib/utils';
 
 export async function POST(request) {
   try {
@@ -178,18 +179,6 @@ export async function POST(request) {
       });
     }
 
-    // HTML 이스케이프 함수
-    function escapeHtml(text) {
-      if (!text) return '';
-      const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-      };
-      return String(text).replace(/[&<>"']/g, m => map[m]);
-    }
 
     // 티어별 색상 반환 함수
     function getTierColor(tierName) {

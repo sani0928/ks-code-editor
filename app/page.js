@@ -11,10 +11,10 @@ import StatusBar from "../components/UI/StatusBar";
 import { useFiles } from "../hooks/useFiles";
 import { getLanguageFromFile, isCodeFile } from "../lib/fileManager";
 import { applyCSSVariables } from "../lib/theme";
+import { escapeHtml } from "../lib/utils";
 import {
   runPythonCode,
   runJavaScriptCode,
-  escapeHtml,
 } from "../lib/codeRunner";
 import {
   saveProblemNumber,
@@ -875,7 +875,7 @@ export default function Home() {
     []
   );
 
-  const handleEditorChange = (value, groupId) => {
+  const handleEditorChange = useCallback((value, groupId) => {
     if (value !== undefined) {
       const group = editorGroups.find((g) => g.id === groupId);
       if (group && group.activeTab) {
@@ -886,9 +886,9 @@ export default function Home() {
         }
       }
     }
-  };
+  }, [editorGroups, updateFile]);
 
-  const handleEditorMount = (editor, groupId) => {
+  const handleEditorMount = useCallback((editor, groupId) => {
     editorRefs.current[groupId] = editor;
 
     if (groupId === activeGroupId) {
@@ -906,7 +906,7 @@ export default function Home() {
         setCursorPosition(`Ln ${position.lineNumber}, Col ${position.column}`);
       }
     });
-  };
+  }, [activeGroupId, editorGroups, files]);
 
   const handleRunCode = async () => {
     const activeGroup = editorGroups.find((g) => g.id === activeGroupId);
@@ -1419,7 +1419,7 @@ export default function Home() {
               fontSize: "11px",
               fontWeight: 600,
               textTransform: "uppercase",
-              color: "var(--text-primary)",
+              color: "var(--color-text-primary)",
               borderBottom: "1px solid var(--color-border-default)",
             }}
           >
@@ -1438,7 +1438,7 @@ export default function Home() {
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            backgroundColor: "var(--bg-primary)",
+            backgroundColor: "var(--color-bg-main)",
             position: "relative",
             minWidth: 0,
             minHeight: 0,
@@ -1513,7 +1513,7 @@ export default function Home() {
               height: "300px",
               display: "flex",
               flexDirection: "column",
-              backgroundColor: "var(--bg-primary)",
+              backgroundColor: "var(--color-bg-main)",
               borderTop: "1px solid var(--color-border-default)",
             }}
           >

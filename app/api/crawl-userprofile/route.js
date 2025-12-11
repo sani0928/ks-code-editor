@@ -1,3 +1,5 @@
+import { escapeHtml } from '../../../lib/utils';
+
 export async function POST(request) {
   try {
     const { handle } = await request.json();
@@ -66,18 +68,6 @@ export async function POST(request) {
       return '#007acc'; // 기본 색상
     }
 
-    // HTML 이스케이프 함수
-    function escapeHtml(text) {
-      if (!text) return '';
-      const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-      };
-      return String(text).replace(/[&<>"']/g, m => map[m]);
-    }
 
     // 날짜 포맷팅
     function formatDate(dateString) {

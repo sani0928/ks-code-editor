@@ -67,13 +67,10 @@ export default function OutputPanel({
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      const hours = now.getHours();
+      const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const seconds = String(now.getSeconds()).padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      const displayHours = hours % 12 || 12;
-      const formattedHours = String(displayHours).padStart(2, '0');
-      setCurrentTime(`${ampm} ${formattedHours}:${minutes}:${seconds}`);
+      setCurrentTime(`${hours}:${minutes}:${seconds}`);
     };
 
     updateTime();
