@@ -16,7 +16,7 @@ import {
  * 챗봇 뷰어 컴포넌트
  */
 export default function ChatbotViewer() {
-  const languages = ['Python', 'Java', 'C++', 'JavaScript'];
+  const languages = ['Python', 'C++', 'Java', 'JavaScript'];
 
   // 초기 챗봇 설정을 localStorage에서 로드 (lazy initialization)
   const getInitialChatbotSettings = () => {
@@ -46,6 +46,10 @@ export default function ChatbotViewer() {
   const [profileInfo, setProfileInfo] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  
+  // 최근 20턴(40개 메시지)만 유지
+  const MAX_TURNS = 20; // 최대 유지할 대화 턴 수
+  const MAX_MESSAGES = MAX_TURNS * 2; // 40개 메시지 (user + assistant)
 
   // 스크롤을 맨 아래로
   const scrollToBottom = () => {
@@ -88,6 +92,7 @@ export default function ChatbotViewer() {
   }, [selectedLanguage, hideAnswer]);
 
   // 대화 기록이 변경될 때마다 localStorage에 저장 (시스템 메시지 제외)
+  // messages는 이미 최근 20턴(40개 메시지)만 유지되도록 제한됨
   useEffect(() => {
     if (typeof window !== 'undefined' && messages.length > 0) {
       saveChatbotMessages(messages);
@@ -111,7 +116,18 @@ export default function ChatbotViewer() {
     질문이 알고리즘 문제와 관련이 있는지 구별하여 적절한 답변을 해주세요. (알고리즘과 너무 멀리 떨어진 질문은 온건하게 거절하세요.)
     귀찮은 말투로 짜증내며 답변해주세요.
     답변을 작성할 때는 적절한 줄바꿈, 긴 설명은 여러 문단으로 나누는 등 가독성을 고려해 작성해주세요.
-    `;
+
+    ## 백준 티어 난이도 기준
+    백준 문제의 티어를 정확히 구분하여 사용자에게 적절한 난이도로 설명해주세요:
+    - Bronze 5 ~ 1: 기초 문법·구현 문제입니다. 기본적인 조건문, 반복문, 배열/리스트 조작 등이 주로 필요합니다.
+    - Silver 5 ~ 1: 기본 알고리즘 문제입니다. 스택·큐·정렬·BFS/DFS·이분 탐색 등의 기본 알고리즘이 필요합니다.
+    - Gold 5 ~ 1: 중급 알고리즘 문제입니다. DP(동적 계획법)·백트래킹·다익스트라 등 중급 알고리즘이 필요합니다.
+    - Platinum 5 ~ 1: 고급 알고리즘 문제입니다. 세그먼트 트리·플로우(네트워크 플로우) 등 고급 알고리즘이 필요합니다.
+    - Diamond 5 ~ 1: 매우 높은 난이도 문제입니다. 매우 복잡한 알고리즘과 최적화가 필요합니다.
+    - Ruby 5 ~ 1: 최상위 난이도 문제입니다. 복합 조건·고성능 알고리즘 구현이 요구되며 ICPC 세계대회 수준 문제와 유사합니다.
+
+    문제의 티어를 보고 적절한 알고리즘을 추천하고, 사용자의 현재 티어와 문제 티어의 차이를 고려하여 설명의 난이도를 조절해주세요.
+        `;
 
     // 사용자 정보 추가
     if (currentProfileInfo) {
@@ -132,10 +148,12 @@ export default function ChatbotViewer() {
 
     // 문제 정보 추가
     if (currentProblemInfo) {
-      systemPrompt += `## 현재 백준 문제 정보
+      systemPrompt += `## 현재 백준 문제 정보 (중요: 이 정보는 사용자가 현재 풀고 있는 문제입니다)
 - 문제 번호: ${currentProblemInfo.problemId || '정보 없음'}
 - 문제 제목: ${currentProblemInfo.title || '정보 없음'}
 - 문제 티어: ${currentProblemInfo.tier || '정보 없음'}
+
+**중요**: 위 문제 정보는 사용자가 현재 풀고 있는 문제입니다. 이전 대화에서 다른 문제에 대해 언급했더라도, 위의 문제 정보를 기준으로 답변해주세요. 사용자가 문제를 바꾸면 이 정보도 자동으로 업데이트됩니다.
 
 `;
 
@@ -186,6 +204,16 @@ ${currentProblemInfo.sampleOutputs[index]}
 - 힌트와 접근 방법을 단계별로 설명해주세요.
 - 사용자가 스스로 생각하고 풀 수 있도록 유도해주세요.
 - 알고리즘 개념과 아이디어를 설명해주세요.
+
+## 답변 출력 규칙
+답변을 작성할 때 다음 순서와 내용을 포함해주세요:
+1. 문제 핵심 요약: 문제가 무엇을 요구하는지 간결하게 요약해주세요.
+2. 필요한 알고리즘 및 이유: 어떤 알고리즘이 필요한지, 왜 그 알고리즘이 적합한지 설명해주세요.
+3. 단계적 접근 방식: 문제를 해결하기 위한 단계별 접근 방법을 제시해주세요.
+4. 주의할 점: 실수하기 쉬운 부분이나 주의해야 할 사항을 알려주세요.
+
+사용자의 현재 티어와 문제 티어를 고려하여 설명의 밀도를 조절해주세요. 사용자 수준에 맞지 않게 장황하게 작성하지 마세요.
+정답을 단정하지 말고, 항상 가능한 알고리즘적 관점을 중심으로 안내해주세요.
 `;
     } else {
       systemPrompt += `## 중요 지시사항
@@ -194,6 +222,16 @@ ${currentProblemInfo.sampleOutputs[index]}
 - 사용자가 요청 시 코드와 함께 설명해주세요.
 - 코드의 각 부분이 무엇을 하는지 설명해주세요.
 - 코드 예시를 제공할 때는 ${currentLanguage || 'Python'} 언어로 제공해주세요.
+
+## 답변 출력 규칙
+답변을 작성할 때 다음 순서와 내용을 포함해주세요:
+1. 문제 핵심 요약: 문제가 무엇을 요구하는지 간결하게 요약해주세요.
+2. 필요한 알고리즘 및 이유: 어떤 알고리즘이 필요한지, 왜 그 알고리즘이 적합한지 설명해주세요.
+3. 단계적 접근 방식: 문제를 해결하기 위한 단계별 접근 방법을 제시해주세요.
+4. 주의할 점: 실수하기 쉬운 부분이나 주의해야 할 사항을 알려주세요.
+
+사용자의 현재 티어와 문제 티어를 고려하여 설명의 밀도를 조절해주세요. 사용자 수준에 맞지 않게 장황하게 작성하지 마세요.
+정답을 단정하지 말고, 항상 가능한 알고리즘적 관점을 중심으로 안내해주세요.
 `;
     }
 
@@ -223,9 +261,17 @@ ${currentProblemInfo.sampleOutputs[index]}
     setIsLoading(true);
 
     // 사용자 메시지 추가 (타임스탬프 포함)
+    // 20턴(40개 메시지) 초과 시 가장 과거 1턴(2개 메시지) 삭제
+    let currentMessages = messages;
+    if (messages.length >= MAX_MESSAGES) {
+      // 가장 과거 1턴(2개 메시지) 삭제
+      currentMessages = messages.slice(2);
+      console.log(`[대화 기록 관리] 20턴 초과로 가장 과거 1턴(2개 메시지) 삭제`);
+    }
+    
     const userMessageTimestamp = Date.now();
     const newMessages = [
-      ...messages,
+      ...currentMessages,
       { role: 'user', content: userMessage, timestamp: userMessageTimestamp }
     ];
     setMessages(newMessages);
@@ -241,12 +287,16 @@ ${currentProblemInfo.sampleOutputs[index]}
       // 최신 정보로 시스템 프롬프트 생성
       const systemPrompt = createSystemPromptWithInfo(latestProblemInfo, latestProfileInfo, selectedLanguage);
       
-      // 메시지 구성: 시스템 프롬프트는 첫 번째 메시지에만 포함
-      // 이전 대화 기록(newMessages)에는 이미 모든 대화가 포함되어 있음
+      // 최근 20턴(40개 메시지)만 전송
       const messagesToSend = [
         { role: 'system', content: systemPrompt },
-        ...newMessages  // 이전 대화 기록 모두 포함 (user와 assistant 메시지)
+        ...newMessages.slice(-MAX_MESSAGES)  // 최근 40개 메시지만 전송
       ];
+      
+      if (newMessages.length > MAX_MESSAGES) {
+        const excludedCount = newMessages.length - MAX_MESSAGES;
+        console.log(`[API 전송] 전체 ${newMessages.length}개 메시지 중 가장 과거 ${excludedCount}개 제외, 최근 ${MAX_MESSAGES}개만 전송`);
+      }
       
       const response = await fetch('/api/chatbot', {
         method: 'POST',
