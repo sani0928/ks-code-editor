@@ -169,7 +169,7 @@ export default function TitleBar({
         }}
         title={isFullscreen ? '전체화면 종료' : '전체화면'}
       >
-        KS Code Editor v1.1
+        KS Code Editor v1.2
       </div>
       <div style={{
         display: 'flex',

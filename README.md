@@ -128,7 +128,7 @@ npm start
 
 - **프레임워크**: [Next.js](https://nextjs.org/) 14.0
 - **UI 라이브러리**: [React](https://react.dev/) 18.2
-- **에디터**: [Monaco Editor](https://microsoft.github.io/monaco-editor/) (VS Code 에디터)
+- **에디터**: [Monaco Editor](https://microsoft.github.io/monaco-editor/)
 - **드래그 앤 드롭**: [react-dnd](https://react-dnd.github.io/react-dnd/)
 - **Python 실행**: [Pyodide](https://pyodide.org/)
 - **HTML 파싱**: [cheerio](https://cheerio.js.org/)
