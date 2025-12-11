@@ -8,7 +8,9 @@
    - 다음 환경 변수를 추가:
      ```
      NEXT_PUBLIC_SITE_URL=https://ks-code-editor.com
+     OPENAI_API_KEY=your-openai-api-key-here
      ```
+   - **중요**: `OPENAI_API_KEY`는 OpenAI에서 발급받은 API 키를 입력하세요.
 3. 배포가 완료되면 자동으로 프로덕션 환경으로 빌드됩니다.
 
 ### 환경 변수
@@ -22,6 +24,7 @@
 - `app/layout.js` - SEO 메타데이터
 - `app/robots.ts` - robots.txt 생성
 - `app/sitemap.ts` - sitemap.xml 생성
+- `app/api/chatbot/route.js` - OpenAI API 키 (챗봇 기능)
 
 ### 로컬 개발 시 환경 변수 설정 (선택사항)
 
@@ -30,4 +33,5 @@
 ```bash
 # .env.local
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+OPENAI_API_KEY=your-openai-api-key-here
 ```

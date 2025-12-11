@@ -268,11 +268,11 @@ ${currentProblemInfo.sampleOutputs[index]}
           try {
             error = JSON.parse(errorText);
           } catch {
-            error = { error: errorText || '챗봇 응답을 가져오는데 실패했습니다.' };
+            error = { error: errorText || '응답을 가져오는데 실패했습니다.' };
           }
-          throw new Error(error.error || '챗봇 응답을 가져오는데 실패했습니다.');
+          throw new Error(error.error || '응답을 가져오는데 실패했습니다.');
         } catch (parseError) {
-          throw new Error('챗봇 응답을 가져오는데 실패했습니다.');
+          throw new Error('응답을 가져오는데 실패했습니다.');
         }
       }
 
