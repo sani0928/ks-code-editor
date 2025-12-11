@@ -8,7 +8,7 @@ import { saveMusicState, loadMusicState } from '../../lib/storage';
  * 음악 플레이어 컴포넌트
  * 서버 비용 절감을 위한 지연 로딩 및 최적화 포함
  */
-export default function MusicPlayer() {
+export default function MusicPlayer({ isCompact = false }) {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const musicRef = useRef(null);
@@ -258,40 +258,45 @@ export default function MusicPlayer() {
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      gap: '8px',
-      fontSize: '12px'
+      gap: isCompact ? '4px' : '8px',
+      fontSize: isCompact ? '11px' : '12px',
+      flexShrink: 0
     }}>
       {/* 현재 트랙 번호 표시 */}
-      <div style={{
-        fontSize: '11px',
-        color: 'var(--text-primary)',
-        fontFamily: "'Consolas', 'Courier New', monospace",
-        fontWeight: 500,
-        minWidth: '50px'
-      }}>
-        Track {currentTrackIndex + 1}
-      </div>
+      {!isCompact && (
+        <div style={{
+          fontSize: '11px',
+          color: 'var(--color-text-primary)',
+          fontFamily: "'Consolas', 'Courier New', monospace",
+          fontWeight: 500,
+          minWidth: '50px',
+          flexShrink: 0
+        }}>
+          Track {currentTrackIndex + 1}
+        </div>
+      )}
 
       {/* 이전 곡 버튼 */}
       <button
         onClick={handlePrevious}
         style={{
-          padding: '4px 6px',
+          padding: isCompact ? '3px 4px' : '4px 6px',
           backgroundColor: 'transparent',
-          color: 'var(--text-primary)',
+          color: 'var(--color-text-primary)',
           border: 'none',
           outline: 'none',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '14px',
+          fontSize: isCompact ? '12px' : '14px',
           lineHeight: '1',
-          minWidth: '26px',
-          minHeight: '22px',
-          boxSizing: 'border-box'
+          minWidth: isCompact ? '22px' : '26px',
+          minHeight: isCompact ? '20px' : '22px',
+          boxSizing: 'border-box',
+          flexShrink: 0
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = 'var(--accent-color)';
+          e.currentTarget.style.color = 'var(--color-accent-primary)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.color = 'var(--text-primary)';
@@ -304,22 +309,23 @@ export default function MusicPlayer() {
       <button
         onClick={handlePlayPause}
         style={{
-          padding: '4px 6px',
+          padding: isCompact ? '3px 4px' : '4px 6px',
           backgroundColor: 'transparent',
-          color: 'var(--text-primary)',
+          color: 'var(--color-text-primary)',
           border: 'none',
           outline: 'none',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '14px',
+          fontSize: isCompact ? '12px' : '14px',
           lineHeight: '1',
-          minWidth: '26px',
-          minHeight: '22px',
-          boxSizing: 'border-box'
+          minWidth: isCompact ? '22px' : '26px',
+          minHeight: isCompact ? '20px' : '22px',
+          boxSizing: 'border-box',
+          flexShrink: 0
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = 'var(--accent-color)';
+          e.currentTarget.style.color = 'var(--color-accent-primary)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.color = 'var(--text-primary)';
@@ -333,22 +339,23 @@ export default function MusicPlayer() {
       <button
         onClick={handleNextClick}
         style={{
-          padding: '4px 6px',
+          padding: isCompact ? '3px 4px' : '4px 6px',
           backgroundColor: 'transparent',
-          color: 'var(--text-primary)',
+          color: 'var(--color-text-primary)',
           border: 'none',
           outline: 'none',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '14px',
+          fontSize: isCompact ? '12px' : '14px',
           lineHeight: '1',
-          minWidth: '26px',
-          minHeight: '22px',
-          boxSizing: 'border-box'
+          minWidth: isCompact ? '22px' : '26px',
+          minHeight: isCompact ? '20px' : '22px',
+          boxSizing: 'border-box',
+          flexShrink: 0
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = 'var(--accent-color)';
+          e.currentTarget.style.color = 'var(--color-accent-primary)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.color = 'var(--text-primary)';

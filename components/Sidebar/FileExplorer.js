@@ -39,7 +39,7 @@ export default function FileExplorer({
         <>
           <div style={{
             height: '1px',
-            backgroundColor: 'var(--border-color)',
+            backgroundColor: 'var(--color-border-default)',
             margin: '5px 10px'
           }} />
           {special.map((filename) => (

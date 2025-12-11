@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { darkenColor } from '../../lib/colorUtils';
 
 /**
  * 상단 타이틀 바 컴포넌트
@@ -81,7 +82,7 @@ export default function TitleBar({
   return (
     <div style={{
       height: '30px',
-      backgroundColor: 'var(--bg-tertiary)',
+      backgroundColor: 'var(--color-bg-header)',
       display: 'flex',
       alignItems: 'center',
       padding: '0 10px',
@@ -112,10 +113,10 @@ export default function TitleBar({
             width: '120px',
             height: '20px',
             padding: '2px 8px',
-            backgroundColor: 'var(--bg-primary)',
-            border: '1px solid var(--border-color)',
+            backgroundColor: 'var(--color-bg-input)',
+            border: '1px solid var(--color-border-input)',
             borderRadius: '5px',
-            color: 'var(--text-primary)',
+            color: 'var(--color-text-input)',
             fontSize: '12px'
           }}
         />
@@ -125,17 +126,28 @@ export default function TitleBar({
           style={{
             height: '24px',
             padding: '0 12px',
-            backgroundColor: 'var(--button-load-bg)',
-            color: 'var(--button-text)',
+            backgroundColor: 'var(--color-button-secondary-bg)',
+            color: 'var(--color-text-button)',
             border: 'none',
             borderRadius: '5px',
             cursor: isLoadingProfile || !userId.trim() ? 'default' : 'pointer',
             fontSize: '11px',
             fontWeight: 500,
-            opacity: isLoadingProfile || !userId.trim() ? 0.5 : 1
+            opacity: isLoadingProfile || !userId.trim() ? 0.5 : 1,
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            if (!isLoadingProfile && userId.trim()) {
+              e.currentTarget.style.backgroundColor = darkenColor('--color-button-secondary-bg');
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isLoadingProfile && userId.trim()) {
+              e.currentTarget.style.backgroundColor = 'var(--color-button-secondary-bg)';
+            }
           }}
         >
-          {isLoadingProfile ? '가져오는 중...' : '프로필 가져오기'}
+          {isLoadingProfile ? '가져오는 중...' : '프로필 갱신'}
         </button>
       </div>
       <div
@@ -145,15 +157,15 @@ export default function TitleBar({
           left: '50%',
           transform: 'translateX(-50%)',
           fontSize: '12px',
-          color: 'var(--text-primary)',
+          color: 'var(--color-text-primary)',
           whiteSpace: 'nowrap',
           transition: 'color 0.7s'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = 'var(--accent-color)';
+          e.currentTarget.style.color = 'var(--color-accent-primary)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.color = 'var(--text-primary)';
+          e.currentTarget.style.color = 'var(--color-text-primary)';
         }}
         title={isFullscreen ? '전체화면 종료' : '전체화면'}
       >
@@ -180,10 +192,10 @@ export default function TitleBar({
             width: '120px',
             height: '20px',
             padding: '2px 8px',
-            backgroundColor: 'var(--bg-primary)',
-            border: '1px solid var(--border-color)',
+            backgroundColor: 'var(--color-bg-input)',
+            border: '1px solid var(--color-border-input)',
             borderRadius: '5px',
-            color: 'var(--text-primary)',
+            color: 'var(--color-text-input)',
             fontSize: '12px'
           }}
         />
@@ -193,31 +205,54 @@ export default function TitleBar({
           style={{
             height: '24px',
             padding: '0 12px',
-            backgroundColor: isSameProblem ? 'var(--bg-secondary)' : 'var(--button-load-bg)',
-            color: 'var(--button-text)',
+            backgroundColor: isSameProblem ? 'var(--color-bg-sidebar)' : 'var(--color-button-secondary-bg)',
+            color: 'var(--color-text-button)',
             border: 'none',
             borderRadius: '5px',
             cursor: (isLoadingProblem || isSameProblem) ? 'default' : 'pointer',
             fontSize: '11px',
             fontWeight: 500,
-            opacity: (isLoadingProblem || isSameProblem) ? 0.5 : 1
+            opacity: (isLoadingProblem || isSameProblem) ? 0.5 : 1,
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            if (!isLoadingProblem && !isSameProblem && problemNumber.trim()) {
+              e.currentTarget.style.backgroundColor = darkenColor('--color-button-secondary-bg');
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isLoadingProblem && !isSameProblem && problemNumber.trim()) {
+              e.currentTarget.style.backgroundColor = 'var(--color-button-secondary-bg)';
+            }
           }}
         >
           {isLoadingProblem ? '가져오는 중...' : '문제 가져오기'}
         </button>
         <button
           onClick={onSubmitToBOJ}
-          disabled={isSubmitting || !problemNumber.trim()}
+          disabled={isSubmitting || !currentProblemNumber.trim()}
           style={{
             height: '24px',
             padding: '0 12px',
-            backgroundColor: 'var(--accent-color)',
-            color: 'var(--button-text)',
+            backgroundColor: 'var(--color-button-primary-bg)',
+            color: 'var(--color-text-button)',
             border: 'none',
             borderRadius: '5px',
-            cursor: 'pointer',
+            cursor: isSubmitting || !currentProblemNumber.trim() ? 'default' : 'pointer',
             fontSize: '11px',
-            fontWeight: 500
+            fontWeight: 500,
+            opacity: isSubmitting || !currentProblemNumber.trim() ? 0.5 : 1,
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            if (!isSubmitting && currentProblemNumber.trim()) {
+              e.currentTarget.style.backgroundColor = darkenColor('--color-button-primary-bg');
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isSubmitting && currentProblemNumber.trim()) {
+              e.currentTarget.style.backgroundColor = 'var(--color-button-primary-bg)';
+            }
           }}
         >
           {isSubmitting ? '제출 중...' : '백준 제출'}

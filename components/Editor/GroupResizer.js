@@ -99,18 +99,18 @@ export default function GroupResizer({ leftGroupId, rightGroupId, onResize }) {
       onMouseDown={handleMouseDown}
       style={{
         width: "4px",
-        backgroundColor: "var(--border-color)",
+        backgroundColor: "var(--color-border-default)",
         cursor: "col-resize",
         flexShrink: 0,
         position: "relative",
         zIndex: 10,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = "var(--accent-color)";
+        e.currentTarget.style.backgroundColor = "var(--color-slider-indicator-color)";
       }}
       onMouseLeave={(e) => {
         if (!isResizingRef.current) {
-          e.currentTarget.style.backgroundColor = "var(--border-color)";
+          e.currentTarget.style.backgroundColor = "var(--color-border-default)";
         }
       }}
     />

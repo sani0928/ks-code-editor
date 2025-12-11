@@ -27,6 +27,8 @@ import {
   loadActiveGroupId,
   saveTheme,
   loadTheme,
+  saveProblemInfo,
+  saveProfileInfo,
 } from "../lib/storage";
 import { skeletonCodes } from "../constants/skeletonCode";
 
@@ -58,6 +60,7 @@ export default function Home() {
   const [userId, setUserId] = useState("");
   const [currentUserId, setCurrentUserId] = useState("");
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const editorRefs = useRef({});
   const isResizingRef = useRef(false);
@@ -72,6 +75,23 @@ export default function Home() {
   ]);
 
   const [activeGroupId, setActiveGroupId] = useState(0);
+
+  // 모바일 화면 감지 (768px 이하)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    // 초기 체크
+    checkMobile();
+    
+    // 화면 크기 변경 시 체크
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // 클라이언트에서만 localStorage에서 값 로드
   useEffect(() => {
@@ -139,12 +159,13 @@ export default function Home() {
       return;
     }
 
-    // HTML 파일이 있는지 확인 (profile.html 제외, 빈 파일 제외)
+    // HTML 파일이 있는지 확인 (프로필 파일 제외, 빈 파일 제외)
+    // 프로필 파일은 유저 아이디로 시작하는 .html 파일
     const hasHtmlFile = Object.keys(files).some(
       (filename) =>
         filename.endsWith(".html") &&
         filename !== "style.css" &&
-        filename !== "profile.html" &&
+        !(currentUserId && filename === `${currentUserId}.html`) &&
         filename !== "problem.html" &&
         files[filename] &&
         files[filename].trim() !== ""
@@ -183,13 +204,14 @@ export default function Home() {
                 .trim();
               const problemFilename = `${problemTitle}.html`;
 
-              // 기존 problem.html 또는 같은 이름의 문제 파일이 있으면 삭제 (profile.html 제외)
+              // 기존 problem.html 또는 같은 이름의 문제 파일이 있으면 삭제 (프로필 파일 제외)
               Object.keys(newFiles).forEach((key) => {
+                const isProfileFile = currentUserId && key === `${currentUserId}.html`;
                 if (
                   key === "problem.html" ||
                   (key.endsWith(".html") &&
                     key !== "style.css" &&
-                    key !== "profile.html")
+                    !isProfileFile)
                 ) {
                   delete newFiles[key];
                 }
@@ -211,6 +233,11 @@ export default function Home() {
               return newFiles;
             });
 
+            // 문제 정보 저장
+            if (data.problemInfo) {
+              saveProblemInfo(data.problemInfo);
+            }
+
             // 새로고침 시 파일 유지
           }
         } catch (error) {
@@ -223,6 +250,86 @@ export default function Home() {
       loadProblem();
     }
   }, [currentProblemNumber, files, openTabs, activeGroupId, isLoadingProblem]);
+
+  // 유저 ID가 있고 profile.html 파일이 없으면 자동으로 프로필 불러오기
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      !currentUserId ||
+      isLoadingProfile
+    ) {
+      return;
+    }
+
+    // 유저 아이디로 파일명 생성
+    const profileFilename = `${currentUserId.trim()}.html`;
+    
+    // 프로필 파일이 있는지 확인 (빈 파일 제외)
+    const hasProfileHtmlFile = 
+      files[profileFilename] && 
+      files[profileFilename].trim() !== "";
+
+    // 유저 ID가 있지만 프로필 파일이 없으면 자동으로 불러오기
+    if (currentUserId && !hasProfileHtmlFile) {
+      const loadProfile = async () => {
+        setIsLoadingProfile(true);
+        try {
+          const response = await fetch("/api/crawl-userprofile", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ handle: currentUserId.trim() }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "프로필을 가져오는데 실패했습니다.");
+          }
+
+          const data = await response.json();
+
+          if (data.success && data.profileHtml) {
+            // 함수형 업데이트로 기존 파일 유지
+            setFiles((prev) => {
+              const newFiles = { ...prev };
+
+              // 기존 모든 프로필 HTML 파일 삭제 (profile.html 또는 유저아이디.html 형식)
+              Object.keys(newFiles).forEach((key) => {
+                // profile.html이거나, 유저 아이디 형식의 .html 파일 (예: kksan12.html, user123.html)
+                const isProfileFile = key === "profile.html" ||
+                  (key.endsWith(".html") &&
+                   key !== "style.css" &&
+                   key !== "problem.html" &&
+                   /^[a-zA-Z0-9_]+\.html$/.test(key));
+                
+                if (isProfileFile && key !== profileFilename) {
+                  delete newFiles[key];
+                }
+              });
+
+              newFiles[profileFilename] = data.profileHtml;
+
+              return newFiles;
+            });
+            
+            // 프로필 정보 저장
+            if (data.profileInfo) {
+              saveProfileInfo(data.profileInfo);
+            }
+
+            // 새로고침 시 파일 유지
+          }
+        } catch (error) {
+          console.error("프로필 자동 로드 오류:", error);
+        } finally {
+          setIsLoadingProfile(false);
+        }
+      };
+
+      loadProfile();
+    }
+  }, [currentUserId, files, isLoadingProfile]);
 
   // 파일 다운로드 함수
   const handleDownloadFile = useCallback((filename, content) => {
@@ -340,19 +447,6 @@ export default function Home() {
     }
   }, [activeGroupId]);
 
-  // 유저 아이디 저장
-  useEffect(() => {
-    if (userId) {
-      saveUserId(userId);
-    }
-  }, [userId]);
-
-  // 유저 아이디 저장
-  useEffect(() => {
-    if (userId) {
-      saveUserId(userId);
-    }
-  }, [userId]);
 
   // 키보드 단축키
   useEffect(() => {
@@ -896,13 +990,14 @@ export default function Home() {
         setFiles((prev) => {
           const newFiles = { ...prev };
 
-          // 기존 problem.html 또는 같은 이름의 문제 파일이 있으면 삭제 (profile.html 제외)
+          // 기존 problem.html 또는 같은 이름의 문제 파일이 있으면 삭제 (프로필 파일 제외)
           Object.keys(newFiles).forEach((key) => {
+            const isProfileFile = currentUserId && key === `${currentUserId}.html`;
             if (
               key === "problem.html" ||
               (key.endsWith(".html") &&
                 key !== "style.css" &&
-                key !== "profile.html")
+                !isProfileFile)
             ) {
               // 탭에서도 제거
               setOpenTabs((prev) => prev.filter((tab) => tab !== key));
@@ -939,6 +1034,11 @@ export default function Home() {
 
         // 문제 가져오기 성공 시에만 문제 번호 저장
         saveProblemNumber(problemNumber.trim());
+        
+        // 문제 정보 저장
+        if (data.problemInfo) {
+          saveProblemInfo(data.problemInfo);
+        }
 
         // 문제 파일 열기
         if (!openTabs.includes(problemFilename)) {
@@ -996,38 +1096,79 @@ export default function Home() {
       const data = await response.json();
 
       if (data.success && data.profileHtml) {
+        // 유저 아이디로 파일명 변경
+        const profileFilename = `${userId.trim()}.html`;
+
         // 함수형 업데이트로 기존 파일 유지
-        setFiles((prev) => ({
-          ...prev,
-          "profile.html": data.profileHtml,
-        }));
+        setFiles((prev) => {
+          const newFiles = { ...prev };
+
+          // 기존 모든 프로필 HTML 파일 삭제 (profile.html 또는 유저아이디.html 형식)
+          Object.keys(newFiles).forEach((key) => {
+            // profile.html이거나, 유저 아이디 형식의 .html 파일 (예: kksan12.html, user123.html)
+            const isProfileFile = key === "profile.html" ||
+              (key.endsWith(".html") &&
+               key !== "style.css" &&
+               key !== "problem.html" &&
+               /^[a-zA-Z0-9_]+\.html$/.test(key));
+            
+            if (isProfileFile && key !== profileFilename) {
+              // 탭에서도 제거
+              setOpenTabs((prev) => prev.filter((tab) => tab !== key));
+              // 그룹에서도 제거
+              setEditorGroups((groups) =>
+                groups.map((group) => ({
+                  ...group,
+                  tabs: group.tabs.filter((tab) => tab !== key),
+                  activeTab:
+                    group.activeTab === key
+                      ? group.tabs.find((t) => t !== key) || null
+                      : group.activeTab,
+                }))
+              );
+              delete newFiles[key];
+            }
+          });
+
+          newFiles[profileFilename] = data.profileHtml;
+
+          return newFiles;
+        });
         setCurrentUserId(userId.trim());
+        
+        // 프로필 가져오기 성공 시에만 유저 아이디 저장
+        saveUserId(userId.trim());
+        
+        // 프로필 정보 저장
+        if (data.profileInfo) {
+          saveProfileInfo(data.profileInfo);
+        }
 
         // 프로필 파일 열기
-        if (!openTabs.includes("profile.html")) {
-          setOpenTabs([...openTabs, "profile.html"]);
+        if (!openTabs.includes(profileFilename)) {
+          setOpenTabs([...openTabs, profileFilename]);
         }
 
         setEditorGroups((groups) =>
           groups.map((group) => {
             if (group.id === activeGroupId) {
-              const newTabs = group.tabs.includes("profile.html")
+              const newTabs = group.tabs.includes(profileFilename)
                 ? group.tabs
-                : [...group.tabs, "profile.html"];
-              return { ...group, tabs: newTabs, activeTab: "profile.html" };
+                : [...group.tabs, profileFilename];
+              return { ...group, tabs: newTabs, activeTab: profileFilename };
             }
             return group;
           })
         );
 
-        setCurrentFile("profile.html");
+        setCurrentFile(profileFilename);
 
         alert(`프로필 정보를 가져왔습니다! (solved.ac 제공)`);
       } else {
         throw new Error("프로필 정보를 가져올 수 없습니다.");
       }
     } catch (error) {
-      console.error("프로필 가져오기 오류:", error);
+      console.error("프로필 갱신 오류:", error);
       alert("프로필 정보를 가져올 수 없습니다. 아이디를 확인하세요.");
     } finally {
       setIsLoadingProfile(false);
@@ -1035,7 +1176,7 @@ export default function Home() {
   };
 
   const handleSubmitToBOJ = async () => {
-    if (!problemNumber.trim()) {
+    if (!currentProblemNumber.trim()) {
       alert("문제 번호를 입력하세요.");
       return;
     }
@@ -1048,7 +1189,7 @@ export default function Home() {
 
     const code = activeEditor.getValue();
     if (!code.trim()) {
-      alert("코드가 비어있습니다.");
+      alert("복사할 코드 파일 탭을 열어주세요.");
       return;
     }
 
@@ -1061,14 +1202,14 @@ export default function Home() {
         `코드가 클립보드에 복사되었습니다!\n\n확인 버튼을 누르면 백준 제출 페이지로 이동합니다.\n코드 입력란에 Ctrl+V로 붙여넣으세요.`
       );
 
-      const problemUrl = `https://www.acmicpc.net/submit/${problemNumber}`;
+      const problemUrl = `https://www.acmicpc.net/submit/${currentProblemNumber}`;
       window.open(problemUrl, "_blank");
 
       setIsSubmitting(false);
     } catch (error) {
       console.error("클립보드 복사 실패:", error);
 
-      const problemUrl = `https://www.acmicpc.net/submit/${problemNumber}`;
+      const problemUrl = `https://www.acmicpc.net/submit/${currentProblemNumber}`;
 
       alert(
         `클립보드 복사에 실패했습니다.\n\n확인 버튼을 누르면 코드가 표시된 새 창과 백준 제출 페이지가 열립니다.`
@@ -1076,26 +1217,26 @@ export default function Home() {
 
       const root = document.documentElement;
       const bgPrimary = getComputedStyle(root)
-        .getPropertyValue("--bg-primary")
+        .getPropertyValue("--color-bg-main")
         .trim();
       const bgSecondary = getComputedStyle(root)
-        .getPropertyValue("--bg-secondary")
+        .getPropertyValue("--color-bg-sidebar")
         .trim();
       const bgTertiary = getComputedStyle(root)
-        .getPropertyValue("--bg-tertiary")
+        .getPropertyValue("--color-bg-header")
         .trim();
       const textPrimary = getComputedStyle(root)
-        .getPropertyValue("--text-primary")
+        .getPropertyValue("--color-text-primary")
         .trim();
       const fileSpecialColor = getComputedStyle(root)
-        .getPropertyValue("--file-special-color")
+        .getPropertyValue("--color-accent-file")
         .trim();
 
       const codeWindow = window.open("", "_blank");
       codeWindow.document.write(`
         <html>
           <head>
-            <title>백준 제출용 코드 - 문제 ${problemNumber}</title>
+            <title>백준 제출용 코드 - 문제 ${currentProblemNumber}</title>
             <style>
               body { 
                 font-family: monospace; 
@@ -1127,7 +1268,7 @@ export default function Home() {
           </head>
           <body>
             <div class="info">
-              <h2>백준 문제 ${problemNumber} 제출용 코드</h2>
+              <h2>백준 문제 ${currentProblemNumber} 제출용 코드</h2>
               <p>아래 코드를 복사하여 <a href="${problemUrl}" target="_blank">백준 제출 페이지</a>에 붙여넣으세요.</p>
             </div>
             <pre>${escapeHtml(code)}</pre>
@@ -1173,7 +1314,7 @@ export default function Home() {
   const handleTabDoubleClick = (filename) => {
     if (filename === "style.css") {
       handleResetTheme();
-    } else if (filename === "profile.html") {
+    } else if (filename && filename.endsWith(".html") && currentUserId && filename === `${currentUserId}.html`) {
       setProfileHtmlViewMode(!profileHtmlViewMode);
     } else if (filename && filename.endsWith(".html")) {
       setProblemHtmlViewMode(!problemHtmlViewMode);
@@ -1192,6 +1333,32 @@ export default function Home() {
   const activeGroup = editorGroups.find((g) => g.id === activeGroupId);
   const activeFile = activeGroup?.activeTab || currentFile;
   const language = getLanguageFromFile(activeFile);
+
+  // 모바일 화면일 때 안내 문구만 표시
+  if (isMobile) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+          height: "100vh",
+          backgroundColor: "var(--color-bg-main)",
+          color: "var(--color-text-primary)",
+          fontSize: "16px",
+          textAlign: "center",
+          padding: "20px",
+        }}
+      >
+        <div>
+          KS Code Editor는 모바일을 지원하지 않습니다.
+          <br />
+          데스크탑을 이용해주세요.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -1240,8 +1407,8 @@ export default function Home() {
             minWidth: "200px",
             maxWidth: "200px",
             flexShrink: 0,
-            backgroundColor: "var(--bg-secondary)",
-            borderRight: "1px solid var(--border-color)",
+            backgroundColor: "var(--color-bg-sidebar)",
+            borderRight: "1px solid var(--color-border-default)",
             display: "flex",
             flexDirection: "column",
           }}
@@ -1253,7 +1420,7 @@ export default function Home() {
               fontWeight: 600,
               textTransform: "uppercase",
               color: "var(--text-primary)",
-              borderBottom: "1px solid var(--border-color)",
+              borderBottom: "1px solid var(--color-border-default)",
             }}
           >
             Explorer
@@ -1298,6 +1465,8 @@ export default function Home() {
             {editorGroups.map((group, groupIndex) => (
               <Fragment key={group.id}>
                 <EditorGroup
+                  currentUserId={currentUserId}
+                  currentProblemNumber={currentProblemNumber}
                   group={group}
                   files={files}
                   onEditorChange={handleEditorChange}
@@ -1329,7 +1498,7 @@ export default function Home() {
           <div
             style={{
               height: "4px",
-              backgroundColor: "var(--border-color)",
+              backgroundColor: "var(--color-border-default)",
               cursor: isTerminalCollapsed ? "default" : "ns-resize",
               position: "relative",
               pointerEvents: isTerminalCollapsed ? "none" : "auto",
@@ -1345,7 +1514,7 @@ export default function Home() {
               display: "flex",
               flexDirection: "column",
               backgroundColor: "var(--bg-primary)",
-              borderTop: "1px solid var(--border-color)",
+              borderTop: "1px solid var(--color-border-default)",
             }}
           >
             <OutputPanel

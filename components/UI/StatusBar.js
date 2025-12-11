@@ -7,13 +7,13 @@ export default function StatusBar({ cursorPosition, language }) {
   return (
     <div style={{
       height: '22px',
-      backgroundColor: 'var(--accent-color)',
+      backgroundColor: 'var(--color-accent-primary)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '0 10px',
       fontSize: '12px',
-      color: 'var(--statusbar-text)'
+      color: 'var(--color-text-statusbar)'
     }}>
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <div style={{ marginRight: '15px', display: 'flex', alignItems: 'center' }}>
@@ -36,7 +36,7 @@ export default function StatusBar({ cursorPosition, language }) {
           target="_blank"
           rel="noopener noreferrer"
           style={{
-            color: 'var(--statusbar-text)',
+            color: 'var(--color-text-statusbar)',
             textDecoration: 'none',
             fontWeight: 600,
             cursor: 'pointer',

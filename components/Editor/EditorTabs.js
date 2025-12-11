@@ -56,11 +56,11 @@ export default function DraggableTab({
         padding: '0 15px',
         display: 'flex',
         alignItems: 'center',
-        backgroundColor: isActive ? 'var(--bg-primary)' : 'var(--bg-tertiary)',
-        borderRight: '1px solid var(--border-color)',
+        backgroundColor: isActive ? 'var(--color-tab-active-bg)' : 'var(--color-bg-tab)',
+        borderRight: '1px solid var(--color-border-default)',
         cursor: 'pointer',
         fontSize: '13px',
-        color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+        color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
         whiteSpace: 'nowrap',
         position: 'relative',
         opacity: isDragging ? 0.5 : 1,
@@ -68,12 +68,12 @@ export default function DraggableTab({
       onClick={handleClick}
       onMouseEnter={(e) => {
         if (!isActive) {
-          e.currentTarget.style.backgroundColor = 'var(--tab-hover-bg)';
+          e.currentTarget.style.backgroundColor = 'var(--color-tab-hover-bg)';
         }
       }}
       onMouseLeave={(e) => {
         if (!isActive) {
-          e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
+          e.currentTarget.style.backgroundColor = 'var(--color-bg-tab)';
         }
       }}
     >
@@ -99,8 +99,8 @@ export default function DraggableTab({
           e.stopPropagation();
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'var(--tab-close-hover-bg)';
-          e.currentTarget.style.color = 'var(--tab-close-hover-color)';
+          e.currentTarget.style.backgroundColor = 'var(--color-tab-close-hover-bg)';
+          e.currentTarget.style.color = 'var(--color-tab-close-hover-text)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.backgroundColor = 'transparent';

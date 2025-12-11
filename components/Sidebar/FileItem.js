@@ -2,6 +2,7 @@
 
 import { useDrag } from 'react-dnd';
 import Image from 'next/image';
+import { GoCodeReview } from 'react-icons/go';
 
 const ItemTypes = {
   FILE: 'file',
@@ -31,6 +32,7 @@ export default function FileItem({
   const isProblemHtml = filename.endsWith('.html') && filename !== 'style.css';
   const isInputTxt = filename === 'input.txt';
   const isStyleCss = filename === 'style.css';
+  const isChatbot = filename === '옜다정답.ai';
 
   const getFileIcon = () => {
     if (isPython) {
@@ -48,6 +50,9 @@ export default function FileItem({
     if (isStyleCss) {
       return <Image src="/icons/css.png" alt="CSS" width={16} height={16} style={{ display: 'inline-block' }} />;
     }
+    if (isChatbot) {
+      return <GoCodeReview size={16} style={{ display: 'inline-block', color: 'white' }} />;
+    }
     if (isProblemHtml) return '🌐';
     if (isReadme) return '📝';
     return '📄';
@@ -63,14 +68,14 @@ export default function FileItem({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        color: isSpecial ? 'var(--file-special-color)' : 'var(--text-primary)',
-        backgroundColor: isActive ? 'var(--bg-tertiary)' : 'transparent',
+        color: isSpecial ? 'var(--color-accent-file)' : 'var(--color-text-primary)',
+        backgroundColor: isActive ? 'var(--color-bg-header)' : 'transparent',
         opacity: isDragging ? 0.5 : 1,
       }}
       onClick={onClick}
       onMouseEnter={(e) => {
         if (!isActive) {
-          e.currentTarget.style.backgroundColor = 'var(--file-item-hover-bg)';
+          e.currentTarget.style.backgroundColor = 'var(--color-file-item-hover-bg)';
         }
       }}
       onMouseLeave={(e) => {

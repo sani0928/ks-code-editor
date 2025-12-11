@@ -291,12 +291,12 @@ export async function POST(request) {
   <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: #252526; border: 1px solid #3e3e42; border-radius: 5px;">
     <thead>
       <tr style="background-color: #2d2d30;">
-        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #2d8474;">시간 제한</th>
-        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #2d8474;">메모리 제한</th>
-        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #2d8474;">제출</th>
-        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #2d8474;">정답</th>
-        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #2d8474;">맞힌 사람</th>
-        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #2d8474;">정답 비율</th>
+        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #cccccc;">시간 제한</th>
+        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #cccccc;">메모리 제한</th>
+        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #cccccc;">제출</th>
+        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #cccccc;">정답</th>
+        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #cccccc;">맞힌 사람</th>
+        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #cccccc;">정답 비율</th>
       </tr>
     </thead>
     <tbody>

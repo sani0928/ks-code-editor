@@ -28,7 +28,7 @@ export default function NewGroupDropZone({ onDrop, isVisible }) {
   const getAccentColorWithOpacity = (opacity) => {
     try {
       const root = document.documentElement;
-      const accentColor = getComputedStyle(root).getPropertyValue('--accent-color').trim();
+      const accentColor = getComputedStyle(root).getPropertyValue('--color-accent-primary').trim();
       if (accentColor.startsWith('#')) {
         const r = parseInt(accentColor.slice(1, 3), 16);
         const g = parseInt(accentColor.slice(3, 5), 16);
@@ -55,11 +55,10 @@ export default function NewGroupDropZone({ onDrop, isVisible }) {
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: '14px',
-        color: 'var(--accent-color)',
+        color: 'var(--color-accent-primary)',
         fontWeight: 'bold',
         pointerEvents: 'auto',
         backgroundColor: isOver ? getAccentColorWithOpacity(0.2) : getAccentColorWithOpacity(0.1),
-        border: isOver ? `2px solid var(--accent-color)` : `2px dashed var(--accent-color)`,
       }}
     >
     </div>

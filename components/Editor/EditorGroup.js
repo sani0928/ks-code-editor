@@ -4,8 +4,9 @@ import { useState, useRef, useEffect } from 'react';
 import { useDrop } from 'react-dnd';
 import MonacoEditor from './MonacoEditor';
 import EditorTabs from './EditorTabs';
-import ProblemViewer from '../Problem/ProblemViewer';
-import ProfileViewer from '../Profile/ProfileViewer';
+import ProblemViewer from '../viewers/ProblemViewer';
+import ProfileViewer from '../viewers/ProfileViewer';
+import ChatbotViewer from '../viewers/ChatbotViewer';
 import { getLanguageFromFile } from '../../lib/fileManager';
 
 const ItemTypes = {
@@ -31,6 +32,8 @@ export default function EditorGroup({
   isActive,
   problemHtmlViewMode,
   profileHtmlViewMode,
+  currentUserId,
+  currentProblemNumber,
   isNewGroupDropZoneVisible = false,
 }) {
   const [hoverIndex, setHoverIndex] = useState(null);
@@ -136,9 +139,11 @@ export default function EditorGroup({
 
   const activeFile = group.activeTab;
   const language = activeFile ? getLanguageFromFile(activeFile) : 'plaintext';
-  const isProfileHtml = activeFile === 'profile.html';
+  const isProfileHtml = currentUserId && activeFile === `${currentUserId}.html`;
+  const isChatbot = activeFile === '옜다정답.ai';
   const isProblemHtml = activeFile && 
     !isProfileHtml &&
+    !isChatbot &&
     activeFile.endsWith('.html') && 
     files[activeFile] && 
     (files[activeFile].includes('<!DOCTYPE html>') || files[activeFile].includes('<html'));
@@ -153,7 +158,7 @@ export default function EditorGroup({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        backgroundColor: (isOver || isActive) ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
+        backgroundColor: (isOver || isActive) ? 'var(--color-bg-header)' : 'var(--color-bg-main)',
         cursor: 'default',
         overflow: 'hidden',
         flexShrink: 0
@@ -168,12 +173,12 @@ export default function EditorGroup({
         className="tab-bar-container"
         style={{
           height: '35px',
-          backgroundColor: 'var(--bg-tertiary)',
+          backgroundColor: 'var(--color-bg-tab)',
           display: 'flex',
           alignItems: 'flex-end',
           overflowX: 'auto',
           overflowY: 'hidden',
-          borderBottom: '1px solid var(--border-color)',
+          borderBottom: '1px solid var(--color-border-default)',
           position: 'relative'
         }}
       >
@@ -195,8 +200,8 @@ export default function EditorGroup({
                     left: 0,
                     top: 0,
                     bottom: 0,
-                    width: 'var(--tab-drag-indicator-width, 2px)',
-                    backgroundColor: 'var(--tab-drag-indicator-color, var(--accent-color))',
+                    width: 'var(--color-tab-drag-indicator-width, 2px)',
+                    backgroundColor: 'var(--color-tab-drag-indicator-color, var(--color-accent-primary))',
                     zIndex: 10,
                     pointerEvents: 'none'
                   }}
@@ -217,8 +222,8 @@ export default function EditorGroup({
                     right: 0,
                     top: 0,
                     bottom: 0,
-                    width: 'var(--tab-drag-indicator-width, 2px)',
-                    backgroundColor: 'var(--tab-drag-indicator-color, var(--accent-color))',
+                    width: 'var(--color-tab-drag-indicator-width, 2px)',
+                    backgroundColor: 'var(--color-tab-drag-indicator-color, var(--color-accent-primary))',
                     zIndex: 10,
                     pointerEvents: 'none'
                   }}
@@ -245,11 +250,14 @@ export default function EditorGroup({
         }}
       >
         {activeFile ? (
-          isProfileHtml ? (
+          isChatbot ? (
+            <ChatbotViewer />
+          ) : isProfileHtml ? (
             profileHtmlViewMode ? (
               <ProfileViewer 
                 html={files[activeFile] || ''} 
                 css={files['style.css'] || ''}
+                userId={currentUserId}
               />
             ) : (
               <MonacoEditor
@@ -265,6 +273,7 @@ export default function EditorGroup({
               <ProblemViewer 
                 html={files[activeFile] || ''} 
                 css={files['style.css'] || ''}
+                problemNumber={currentProblemNumber}
               />
             ) : (
               <MonacoEditor
