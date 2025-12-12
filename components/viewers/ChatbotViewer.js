@@ -16,7 +16,7 @@ import {
  * 챗봇 뷰어 컴포넌트
  */
 export default function ChatbotViewer() {
-  const languages = ['Python', 'C++', 'Java', 'JavaScript'];
+  const languages = ['Python', 'C', 'C++', 'Java', 'JavaScript'];
 
   // 초기 챗봇 설정을 localStorage에서 로드 (lazy initialization)
   const getInitialChatbotSettings = () => {
@@ -222,6 +222,7 @@ ${currentProblemInfo.sampleOutputs[index]}
 - 사용자가 요청 시 코드와 함께 설명해주세요.
 - 코드의 각 부분이 무엇을 하는지 설명해주세요.
 - 코드 예시를 제공할 때는 ${currentLanguage || 'Python'} 언어로 제공해주세요.
+${currentLanguage === 'JavaScript' ? `- **중요**: JavaScript 코드는 백준 환경(Node.js)을 기준으로 작성해주세요. \`require('fs')\` 모듈을 사용하여 입력을 받는 백준 스타일 코드를 제공해주세요. 예: \`const input = require('fs').readFileSync('/dev/stdin').toString().trim().split('\\n');\`` : ''}
 
 ## 답변 출력 규칙
 답변을 작성할 때 다음 순서와 내용을 포함해주세요:
@@ -586,8 +587,8 @@ ${currentProblemInfo.sampleOutputs[index]}
           옜다정답 AI를 사용하려면 문제와 프로필 정보가 필요합니다
         </div>
         <div style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
-          {!problemInfo && <div>• 문제 번호를 입력하고 "문제 가져오기"를 클릭해주세요</div>}
-          {!profileInfo && <div>• 유저 아이디를 입력하고 "프로필 갱신"를 클릭해주세요</div>}
+          {!problemInfo && <div>• 문제 번호 입력 후 "문제 가져오기" 클릭</div>}
+          {!profileInfo && <div>• 유저 아이디 입력 후 "프로필 갱신" 클릭</div>}
         </div>
       </div>
     );

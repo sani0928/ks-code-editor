@@ -26,8 +26,8 @@
 - **맞춤형 도움**: solved.ac 프로필/티어와 문제 난이도를 반영해 난이도에 맞는 설명 제공
 - **정답 가리기 모드**: 힌트·접근법만 제시하고 직접 정답 코드는 차단
 
-### 사용자 프로필
-- **프로필 조회**: solved.ac API를 통한 사용자 프로필 정보 표시
+### 유저 프로필
+- **프로필 조회**: solved.ac API를 통한 유저 프로필 정보 표시
 - **프로필 미리보기**: HTML 형식으로 프로필 확인 (탭 더블 클릭으로 전환)
 
 ### 커스터마이징
@@ -36,7 +36,7 @@
 
 ### 코드 실행
 - **Python**: Pyodide를 사용한 브라우저 내 실행
-- **JavaScript**: 브라우저 네이티브 실행
+- **JavaScript, C, C++, Java**: Piston API를 사용한 서버 사이드 실행
 - **입력 파일**: `input.txt` 파일을 통한 입력 처리
 
 ### 데이터 저장
@@ -109,9 +109,9 @@ npm start
 3. 백준 제출 페이지에서 `Ctrl + V`로 코드 붙여넣기
 
 ### 4. 프로필 조회
-1. 상단 헤더의 사용자 아이디 입력란에 solved.ac 아이디 입력
+1. 상단 헤더의 유저 아이디 입력란에 solved.ac 아이디 입력
 2. "프로필 갱신" 버튼 클릭
-3. 프로필 정보가 `(사용자 아이디).html` 파일로 생성됨
+3. 프로필 정보가 `(유저 아이디).html` 파일로 생성됨
 4. 탭을 더블 클릭하여 프로필 미리보기/코드 편집 모드 전환
 
 ### 5. AI 챗봇 사용
@@ -132,15 +132,16 @@ npm start
 - **드래그 앤 드롭**: [react-dnd](https://react-dnd.github.io/react-dnd/)
 - **Python 실행**: [Pyodide](https://pyodide.org/)
 - **HTML 파싱**: [cheerio](https://cheerio.js.org/)
-- **AI 챗봇**: [OpenAI API](https://openai.com/api/)
+- **LangChain**: [LangChain](https://langchain.com/)
 
 ## 지원 언어
 
 ### 코드 실행
 - Python (Pyodide)
-- JavaScript (브라우저 네이티브)
-- C++ (추후 구현 예정)
-- Java (추후 구현 예정)
+- JavaScript (Piston API)
+- C (Piston API)
+- C++ (Piston API)
+- Java (Piston API)
 
 ### 구문 강조
 - Python, JavaScript, TypeScript
@@ -162,6 +163,7 @@ npm start
 - **html 미리보기 가독성 개선**: 문자 정렬 및 색상을 수정하여 가독성을 향상했습니다.
 - **style.css 변수 재조정**: 변수를 디테일하게 세분화해 더욱 다양한 커스텀 테마 조절이 가능하게 수정하였습니다.
 - **코드 최적화**: 중복된 함수를 통합하고, 불필요한 레거시 코드를 제거하였습니다.
+- **C, C++, Java 코드 실행 기능 추가**: C, C++, Java 코드를 실행할 수 있게 되었습니다.
 
 ## 문의
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { createInitialFiles } from '../lib/fileManager';
+import { createInitialFiles, isCodeFile } from '../lib/fileManager';
 import { 
   saveFiles, 
   loadFiles, 
@@ -70,8 +70,7 @@ export function useFiles() {
       };
       // 코드 파일 변경 시에만 저장
       if (isInitializedRef.current && typeof window !== 'undefined') {
-        const ext = filename.split('.').pop()?.toLowerCase();
-        if (['py', 'cpp', 'java', 'js'].includes(ext)) {
+        if (isCodeFile(filename)) {
           saveFiles(newFiles);
         }
       }

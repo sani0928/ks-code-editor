@@ -4,9 +4,19 @@
 
 export const skeletonCodes = {
   '파이쑝.py': `# Python 예제 코드
-# 입력 받기 예제
 a, b = map(int, input().split())
 print(f"{a} + {b} = {a + b}")`,
+
+  '씨.c': `// C 예제 코드
+#include <stdio.h>
+
+int main() {
+    int a, b;
+    scanf("%d %d", &a, &b);
+    printf("%d\\n", a + b);
+    
+    return 0;
+}`,
 
   '씨쁠쁠.cpp': `// C++ 예제 코드
 #include <iostream>
@@ -40,15 +50,14 @@ public class Main {
     }
 }`,
 
-  '자바스크립뚜.js': `// JavaScript 예제 코드
-// readline() 함수로 입력 받기
-const line = readline();
-const [a, b] = line.split(' ').map(Number);
+  '자바스크립뚜.js': `// JavaScript 예제 코드 (백준 스타일 - Node.js)
+const input = require('fs').readFileSync('/dev/stdin').toString().trim().split('\\n');
+const [a, b] = input[0].split(' ').map(Number);
 console.log(a + b);`,
 
   'README.md': `# KS Code Editor
 KS Code Editor는 백준(BOJ) 문제를 편리하게 풀 수 있도록 도와주는 웹 기반 코드 에디터입니다.
-프로필 갱신은 solved.ac와 연동된 사용자 아이디만 가능합니다.
+프로필 갱신은 solved.ac와 연동된 유저 아이디만 가능합니다.
 전체화면을 권장합니다. (F11 키 누르면 전체화면 가능)
 
 ## 키보드 단축키
@@ -81,7 +90,7 @@ KS Code Editor는 백준(BOJ) 문제를 편리하게 풀 수 있도록 도와주
 - 백준 제출 페이지로 코드 복사 및 이동
 
 ### AI 챗봇 (옜다정답 AI)
-- 사용자 프로필과 문제 정보를 반영한 맞춤형 설명 제공
+- 유저 프로필과 문제 정보를 반영한 맞춤형 설명 제공
 - 실력 향상을 위한 정답 가리기 모드 (직접적인 정답을 제공하지 않아요)
 
 ### 접근성·사용성 강화
@@ -93,10 +102,11 @@ KS Code Editor는 백준(BOJ) 문제를 편리하게 풀 수 있도록 도와주
 ## EXPLORER 탭 파일 정보
 
 ### 코드 실행
-- **Python**: Pyodide를 사용한 브라우저 내 실행 지원
-- **C++**: 미구현 (추후 서버 API 요청으로 구현 예정)
-- **Java**: 미구현 (추후 서버 API 요청으로 구현 예정)
-- **JavaScript**: 브라우저 네이티브 실행 지원
+- **Python**: 3.10
+- **C**: 10.2.0
+- **C++**: 10.2.0
+- **Java**: 15.0.2
+- **JavaScript**: 18.15.0
 
 ### 그 외
 - **README.md**: KS Code Editor 서비스 설명서
@@ -108,7 +118,6 @@ KS Code Editor는 백준(BOJ) 문제를 편리하게 풀 수 있도록 도와주
 
 ## 추후 구현 계획
 
-- 다양한 프로그래밍 언어 확장
 - 기본 테마 제공 (Light, Dark 등) 및 커스텀 테마 저장
 
 *문의 및 피드백: kksan12@gmail.com*`,
@@ -277,6 +286,7 @@ KS Code Editor는 백준(BOJ) 문제를 편리하게 풀 수 있도록 도와주
  */
 export const fileOrder = [
   '파이쑝.py',
+  '씨.c',
   '씨쁠쁠.cpp',
   '자바칩.java',
   '자바스크립뚜.js',

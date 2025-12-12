@@ -25,6 +25,7 @@ export default function FileItem({
     }),
   });
   const isPython = filename === '파이쑝.py';
+  const isC = filename === '씨.c';
   const isCpp = filename === '씨쁠쁠.cpp';
   const isJava = filename === '자바칩.java';
   const isJavaScript = filename === '자바스크립뚜.js';
@@ -37,6 +38,9 @@ export default function FileItem({
   const getFileIcon = () => {
     if (isPython) {
       return <Image src="/icons/python.png" alt="Python" width={16} height={16} style={{ display: 'inline-block' }} />;
+    }
+    if (isC) {
+      return <Image src="/icons/c.png" alt="C" width={16} height={16} style={{ display: 'inline-block' }} />;
     }
     if (isCpp) {
       return <Image src="/icons/cpp.png" alt="C++" width={16} height={16} style={{ display: 'inline-block' }} />;

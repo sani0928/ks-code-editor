@@ -15,6 +15,9 @@ import { escapeHtml } from "../lib/utils";
 import {
   runPythonCode,
   runJavaScriptCode,
+  runCppCode,
+  runCCode,
+  runJavaCode,
 } from "../lib/codeRunner";
 import {
   saveProblemNumber,
@@ -938,7 +941,19 @@ export default function Home() {
         setOutput(escapeHtml(result));
         setOutputStatus('success'); // 성공
       } else if (language === "javascript") {
-        const result = runJavaScriptCode(code, inputText);
+        const result = await runJavaScriptCode(code, inputText);
+        setOutput(escapeHtml(result));
+        setOutputStatus('success'); // 성공
+      } else if (language === "cpp") {
+        const result = await runCppCode(code, inputText);
+        setOutput(escapeHtml(result));
+        setOutputStatus('success'); // 성공
+      } else if (language === "c") {
+        const result = await runCCode(code, inputText);
+        setOutput(escapeHtml(result));
+        setOutputStatus('success'); // 성공
+      } else if (language === "java") {
+        const result = await runJavaCode(code, inputText);
         setOutput(escapeHtml(result));
         setOutputStatus('success'); // 성공
       } else {
@@ -1528,7 +1543,7 @@ export default function Home() {
         </div>
       </div>
 
-      <StatusBar cursorPosition={cursorPosition} language={language} />
+      <StatusBar cursorPosition={cursorPosition} language={language} filename={activeFile} />
     </div>
   );
 }
