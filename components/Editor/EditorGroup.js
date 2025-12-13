@@ -34,6 +34,7 @@ export default function EditorGroup({
   profileHtmlViewMode,
   currentUserId,
   currentProblemNumber,
+  currentThemeMode,
   isNewGroupDropZoneVisible = false,
 }) {
   const [hoverIndex, setHoverIndex] = useState(null);
@@ -258,6 +259,7 @@ export default function EditorGroup({
                 html={files[activeFile] || ''} 
                 css={files['style.css'] || ''}
                 userId={currentUserId}
+                themeMode={currentThemeMode}
               />
             ) : (
               <MonacoEditor
@@ -274,6 +276,7 @@ export default function EditorGroup({
                 html={files[activeFile] || ''} 
                 css={files['style.css'] || ''}
                 problemNumber={currentProblemNumber}
+                themeMode={currentThemeMode}
               />
             ) : (
               <MonacoEditor

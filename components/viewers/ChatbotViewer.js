@@ -114,7 +114,6 @@ export default function ChatbotViewer() {
     사용자가 다른 백준 문제를 요청하면 문제 정보를 제공해주세요.
     코드 블록 외에는 볼드, 섹션을 포함한 마크다운 형식을 절대 사용하지 마세요. 일반 텍스트로만 작성해주세요.
     질문이 알고리즘 문제와 관련이 있는지 구별하여 적절한 답변을 해주세요. (알고리즘과 너무 멀리 떨어진 질문은 온건하게 거절하세요.)
-    귀찮은 말투로 짜증내며 답변해주세요.
     답변을 작성할 때는 적절한 줄바꿈, 긴 설명은 여러 문단으로 나누는 등 가독성을 고려해 작성해주세요.
 
     ## 백준 티어 난이도 기준
@@ -530,18 +529,19 @@ ${currentLanguage === 'JavaScript' ? `- **중요**: JavaScript 코드는 백준 
           const code = codeMatch[2];
           return (
             <pre key={index} style={{
-              backgroundColor: '#252526',
+              backgroundColor: 'var(--color-bg-sidebar)',
               padding: '15px',
               borderRadius: '5px',
               overflowX: 'auto',
-              border: '1px solid #3e3e42',
+              border: '1px solid var(--color-border-default)',
               margin: '10px 0',
             }}>
-              {language && <div style={{ color: '#858585', fontSize: '12px', marginBottom: '5px' }}>{language}</div>}
+              {language && <div style={{ color: 'var(--color-text-secondary)', fontSize: '12px', marginBottom: '5px' }}>{language}</div>}
               <code style={{
                 fontFamily: "'Consolas', 'Courier New', monospace",
                 fontSize: '0.9em',
                 whiteSpace: 'pre',
+                color: 'var(--color-text-primary)',
               }}>{code}</code>
             </pre>
           );
@@ -550,11 +550,12 @@ ${currentLanguage === 'JavaScript' ? `- **중요**: JavaScript 코드는 백준 
         const inlineCode = part.slice(1, -1);
         return (
           <code key={index} style={{
-            backgroundColor: '#252526',
+            backgroundColor: 'var(--color-bg-sidebar)',
             padding: '2px 6px',
             borderRadius: '3px',
             fontFamily: "'Consolas', 'Courier New', monospace",
             fontSize: '0.9em',
+            color: 'var(--color-text-primary)',
           }}>{inlineCode}</code>
         );
       }
@@ -573,6 +574,7 @@ ${currentLanguage === 'JavaScript' ? `- **중요**: JavaScript 코드는 백준 
   if (!problemInfo || !profileInfo) {
     return (
       <div style={{
+        backgroundColor: 'var(--color-bg-main)',
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
@@ -587,8 +589,9 @@ ${currentLanguage === 'JavaScript' ? `- **중요**: JavaScript 코드는 백준 
           옜다정답 AI를 사용하려면 문제와 프로필 정보가 필요합니다
         </div>
         <div style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
-          {!problemInfo && <div>• 문제 번호 입력 후 "문제 가져오기" 클릭</div>}
           {!profileInfo && <div>• 유저 아이디 입력 후 "프로필 갱신" 클릭</div>}
+          {!problemInfo && <div>• 문제 번호 입력 후 "문제 가져오기" 클릭</div>}
+          
         </div>
       </div>
     );

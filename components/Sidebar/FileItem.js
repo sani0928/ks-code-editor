@@ -15,7 +15,9 @@ export default function FileItem({
   filename, 
   isActive, 
   onClick, 
-  isSpecial = false 
+  isSpecial = false,
+  currentThemeMode,
+  onThemeToggle
 }) {
   const [{ isDragging }, drag] = useDrag({
     type: ItemTypes.FILE,
@@ -102,6 +104,38 @@ export default function FileItem({
         </span>
         <span>{filename}</span>
       </div>
+      {isStyleCss && onThemeToggle && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onThemeToggle();
+          }}
+          style={{
+            padding: '2px 6px',
+            fontSize: '10px',
+            backgroundColor: 'transparent',
+            border: '1px solid var(--color-border-default)',
+            borderRadius: '3px',
+            color: 'var(--color-text-primary)',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            whiteSpace: 'nowrap',
+            marginLeft: '8px',
+            flexShrink: 0
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--color-bg-sidebar)';
+            e.currentTarget.style.borderColor = 'var(--color-accent-primary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.borderColor = 'var(--color-border-default)';
+          }}
+          title={currentThemeMode === 'custom' ? '테마 토글 (Custom → 이전 테마로 복원)' : '테마 토글 (Dark ↔ Light)'}
+        >
+          {currentThemeMode === 'dark' ? 'Dark' : currentThemeMode === 'light' ? 'Light' : 'Custom'}
+        </button>
+      )}
     </div>
   );
 }

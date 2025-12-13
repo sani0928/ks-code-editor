@@ -10,7 +10,7 @@ import OutputPanel from "../components/Terminal/OutputPanel";
 import StatusBar from "../components/UI/StatusBar";
 import { useFiles } from "../hooks/useFiles";
 import { getLanguageFromFile, isCodeFile } from "../lib/fileManager";
-import { applyCSSVariables } from "../lib/theme";
+import { applyCSSVariables, extractCSSVariables, detectThemeMode } from "../lib/theme";
 import { escapeHtml } from "../lib/utils";
 import {
   runPythonCode,
@@ -30,10 +30,14 @@ import {
   loadActiveGroupId,
   saveTheme,
   loadTheme,
+  saveThemeMode,
+  loadThemeMode,
+  saveLastKnownTheme,
+  loadLastKnownTheme,
   saveProblemInfo,
   saveProfileInfo,
 } from "../lib/storage";
-import { skeletonCodes } from "../constants/skeletonCode";
+import { skeletonCodes, themeTemplates } from "../constants/skeletonCode";
 
 export default function Home() {
   const {
@@ -64,6 +68,8 @@ export default function Home() {
   const [currentUserId, setCurrentUserId] = useState("");
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [themeMode, setThemeMode] = useState('dark');
+  const [lastKnownTheme, setLastKnownTheme] = useState('dark');
 
   const editorRefs = useRef({});
   const isResizingRef = useRef(false);
@@ -207,18 +213,9 @@ export default function Home() {
                 .trim();
               const problemFilename = `${problemTitle}.html`;
 
-              // 기존 problem.html 또는 같은 이름의 문제 파일이 있으면 삭제 (프로필 파일 제외)
-              Object.keys(newFiles).forEach((key) => {
-                const isProfileFile = currentUserId && key === `${currentUserId}.html`;
-                if (
-                  key === "problem.html" ||
-                  (key.endsWith(".html") &&
-                    key !== "style.css" &&
-                    !isProfileFile)
-                ) {
-                  delete newFiles[key];
-                }
-              });
+              // 기존 문제 HTML 파일 삭제
+              const filesToRemove = removeOldHtmlFiles(newFiles, 'problem', problemFilename, currentUserId);
+              filesToRemove.forEach(key => delete newFiles[key]);
 
               newFiles[problemFilename] = data.problemHtml;
 
@@ -297,19 +294,9 @@ export default function Home() {
             setFiles((prev) => {
               const newFiles = { ...prev };
 
-              // 기존 모든 프로필 HTML 파일 삭제 (profile.html 또는 유저아이디.html 형식)
-              Object.keys(newFiles).forEach((key) => {
-                // profile.html이거나, 유저 아이디 형식의 .html 파일 (예: kksan12.html, user123.html)
-                const isProfileFile = key === "profile.html" ||
-                  (key.endsWith(".html") &&
-                   key !== "style.css" &&
-                   key !== "problem.html" &&
-                   /^[a-zA-Z0-9_]+\.html$/.test(key));
-                
-                if (isProfileFile && key !== profileFilename) {
-                  delete newFiles[key];
-                }
-              });
+              // 기존 프로필 HTML 파일 삭제 (자동 로드: 파일만 삭제, 탭/그룹은 유지)
+              const filesToRemove = removeOldHtmlFiles(newFiles, 'profile', profileFilename, currentUserId);
+              filesToRemove.forEach(key => delete newFiles[key]);
 
               newFiles[profileFilename] = data.profileHtml;
 
@@ -333,6 +320,40 @@ export default function Home() {
       loadProfile();
     }
   }, [currentUserId, files, isLoadingProfile]);
+
+  // 문제/프로필 파일에서 기존 HTML 파일 삭제 헬퍼 함수
+  const removeOldHtmlFiles = useCallback((files, type, excludeFilename, currentUserId) => {
+    const filesToRemove = [];
+    
+    Object.keys(files).forEach((key) => {
+      if (type === 'problem') {
+        // 문제 파일 삭제: problem.html 또는 문제 HTML 파일 (프로필 파일 제외)
+        const isProfileFile = currentUserId && key === `${currentUserId}.html`;
+        if (
+          key === "problem.html" ||
+          (key.endsWith(".html") &&
+            key !== "style.css" &&
+            !isProfileFile &&
+            key !== excludeFilename)
+        ) {
+          filesToRemove.push(key);
+        }
+      } else if (type === 'profile') {
+        // 프로필 파일 삭제: profile.html 또는 유저 아이디 형식의 .html 파일
+        const isProfileFile = key === "profile.html" ||
+          (key.endsWith(".html") &&
+           key !== "style.css" &&
+           key !== "problem.html" &&
+           /^[a-zA-Z0-9_]+\.html$/.test(key));
+        
+        if (isProfileFile && key !== excludeFilename) {
+          filesToRemove.push(key);
+        }
+      }
+    });
+    
+    return filesToRemove;
+  }, []);
 
   // 파일 다운로드 함수
   const handleDownloadFile = useCallback((filename, content) => {
@@ -415,6 +436,36 @@ export default function Home() {
     document.body.appendChild(script);
   }, [pyodide, isPyodideReady]);
 
+  // 초기 테마 모드 로드 및 검증
+  useEffect(() => {
+    if (typeof window !== "undefined" && isInitialized && files["style.css"]) {
+      const savedThemeMode = loadThemeMode();
+      const savedLastKnownTheme = loadLastKnownTheme();
+      const detectedMode = detectThemeMode(files["style.css"]);
+      
+      // 실제 내용과 저장된 테마 모드가 다르면 감지된 모드로 설정
+      if (detectedMode !== savedThemeMode) {
+        setThemeMode(detectedMode);
+        saveThemeMode(detectedMode);
+        // Custom이 아닌 경우 lastKnownTheme 업데이트
+        if (detectedMode !== 'custom') {
+          setLastKnownTheme(detectedMode);
+          saveLastKnownTheme(detectedMode);
+        } else {
+          // Custom인 경우 저장된 lastKnownTheme 사용
+          setLastKnownTheme(savedLastKnownTheme);
+        }
+      } else {
+        setThemeMode(savedThemeMode);
+        if (savedThemeMode !== 'custom') {
+          setLastKnownTheme(savedThemeMode);
+        } else {
+          setLastKnownTheme(savedLastKnownTheme);
+        }
+      }
+    }
+  }, [isInitialized, files["style.css"]]);
+
   // 테마 로드 및 적용 (초기 로드 시 한 번만)
   useEffect(() => {
     if (typeof window !== "undefined" && isInitialized && files["style.css"]) {
@@ -429,11 +480,35 @@ export default function Home() {
     }
   }, [isInitialized]); // files 의존성 제거
 
-  // style.css 변경 시 테마 적용
+  // style.css 변경 시 테마 적용 및 모드 감지
   useEffect(() => {
     if (files["style.css"]) {
       applyCSSVariables(files["style.css"]);
       saveTheme(files["style.css"]);
+      
+      // 테마 모드 자동 감지
+      const detectedMode = detectThemeMode(files["style.css"]);
+      if (detectedMode !== themeMode) {
+        const prevMode = themeMode;
+        setThemeMode(detectedMode);
+        saveThemeMode(detectedMode);
+        
+        // Dark/Light → Custom 전환 시 마지막 테마 저장
+        if (detectedMode === 'custom' && (prevMode === 'dark' || prevMode === 'light')) {
+          setLastKnownTheme(prevMode);
+          saveLastKnownTheme(prevMode);
+        }
+        // Custom → Dark/Light 전환 시 마지막 테마 업데이트
+        else if (detectedMode !== 'custom' && prevMode === 'custom') {
+          setLastKnownTheme(detectedMode);
+          saveLastKnownTheme(detectedMode);
+        }
+        // Dark/Light 간 전환 시 마지막 테마 업데이트
+        else if (detectedMode !== 'custom') {
+          setLastKnownTheme(detectedMode);
+          saveLastKnownTheme(detectedMode);
+        }
+      }
     }
   }, [files["style.css"]]);
 
@@ -993,8 +1068,6 @@ export default function Home() {
       const data = await response.json();
 
       if (data.success && data.problemHtml) {
-        const newFiles = { ...files };
-
         // 문제 이름으로 파일명 변경 (특수문자 제거)
         const problemTitle = (data.problemInfo.title || `문제 ${problemNumber}`)
           .replace(/[<>:"/\\|?*]/g, "_")
@@ -1005,30 +1078,23 @@ export default function Home() {
         setFiles((prev) => {
           const newFiles = { ...prev };
 
-          // 기존 problem.html 또는 같은 이름의 문제 파일이 있으면 삭제 (프로필 파일 제외)
-          Object.keys(newFiles).forEach((key) => {
-            const isProfileFile = currentUserId && key === `${currentUserId}.html`;
-            if (
-              key === "problem.html" ||
-              (key.endsWith(".html") &&
-                key !== "style.css" &&
-                !isProfileFile)
-            ) {
-              // 탭에서도 제거
-              setOpenTabs((prev) => prev.filter((tab) => tab !== key));
-              // 그룹에서도 제거
-              setEditorGroups((groups) =>
-                groups.map((group) => ({
-                  ...group,
-                  tabs: group.tabs.filter((tab) => tab !== key),
-                  activeTab:
-                    group.activeTab === key
-                      ? group.tabs.find((t) => t !== key) || null
-                      : group.activeTab,
-                }))
-              );
-              delete newFiles[key];
-            }
+          // 기존 문제 HTML 파일 삭제
+          const filesToRemove = removeOldHtmlFiles(newFiles, 'problem', problemFilename, currentUserId);
+          filesToRemove.forEach(key => {
+            // 탭에서도 제거
+            setOpenTabs((prev) => prev.filter((tab) => tab !== key));
+            // 그룹에서도 제거
+            setEditorGroups((groups) =>
+              groups.map((group) => ({
+                ...group,
+                tabs: group.tabs.filter((tab) => tab !== key),
+                activeTab:
+                  group.activeTab === key
+                    ? group.tabs.find((t) => t !== key) || null
+                    : group.activeTab,
+              }))
+            );
+            delete newFiles[key];
           });
 
           newFiles[problemFilename] = data.problemHtml;
@@ -1118,31 +1184,23 @@ export default function Home() {
         setFiles((prev) => {
           const newFiles = { ...prev };
 
-          // 기존 모든 프로필 HTML 파일 삭제 (profile.html 또는 유저아이디.html 형식)
-          Object.keys(newFiles).forEach((key) => {
-            // profile.html이거나, 유저 아이디 형식의 .html 파일 (예: kksan12.html, user123.html)
-            const isProfileFile = key === "profile.html" ||
-              (key.endsWith(".html") &&
-               key !== "style.css" &&
-               key !== "problem.html" &&
-               /^[a-zA-Z0-9_]+\.html$/.test(key));
-            
-            if (isProfileFile && key !== profileFilename) {
-              // 탭에서도 제거
-              setOpenTabs((prev) => prev.filter((tab) => tab !== key));
-              // 그룹에서도 제거
-              setEditorGroups((groups) =>
-                groups.map((group) => ({
-                  ...group,
-                  tabs: group.tabs.filter((tab) => tab !== key),
-                  activeTab:
-                    group.activeTab === key
-                      ? group.tabs.find((t) => t !== key) || null
-                      : group.activeTab,
-                }))
-              );
-              delete newFiles[key];
-            }
+          // 기존 프로필 HTML 파일 삭제 (수동 로드: 파일 + 탭 + 그룹 모두 정리)
+          const filesToRemove = removeOldHtmlFiles(newFiles, 'profile', profileFilename, currentUserId);
+          filesToRemove.forEach(key => {
+            // 탭에서도 제거
+            setOpenTabs((prev) => prev.filter((tab) => tab !== key));
+            // 그룹에서도 제거
+            setEditorGroups((groups) =>
+              groups.map((group) => ({
+                ...group,
+                tabs: group.tabs.filter((tab) => tab !== key),
+                activeTab:
+                  group.activeTab === key
+                    ? group.tabs.find((t) => t !== key) || null
+                    : group.activeTab,
+              }))
+            );
+            delete newFiles[key];
           });
 
           newFiles[profileFilename] = data.profileHtml;
@@ -1302,10 +1360,49 @@ export default function Home() {
     }
   };
 
+
+  /**
+   * 테마 토글 함수 (dark ↔ light)
+   * Custom 상태에서는 마지막으로 알려진 테마로 복원
+   */
+  const handleThemeToggle = () => {
+    let nextMode;
+    
+    if (themeMode === 'custom') {
+      // Custom 상태에서는 마지막으로 알려진 테마로 복원
+      nextMode = lastKnownTheme === 'light' ? 'light' : 'dark';
+    } else if (themeMode === 'dark') {
+      nextMode = 'light';
+    } else {
+      nextMode = 'dark';
+    }
+
+    setThemeMode(nextMode);
+    saveThemeMode(nextMode);
+    setLastKnownTheme(nextMode);
+    saveLastKnownTheme(nextMode);
+
+    // dark 또는 light로 전환 시 해당 스켈레톤 코드로 style.css 업데이트
+    const newTheme = themeTemplates[nextMode];
+    updateFile("style.css", newTheme);
+    applyCSSVariables(newTheme);
+
+    // 에디터에 반영
+    const styleCssGroup = editorGroups.find((g) => g.activeTab === "style.css");
+    if (styleCssGroup && editorRefs.current[styleCssGroup.id]) {
+      editorRefs.current[styleCssGroup.id].setValue(newTheme);
+    }
+  };
+
   const handleResetTheme = () => {
-    const defaultTheme = skeletonCodes["style.css"];
+    // 항상 Dark 테마로 리셋
+    const defaultTheme = themeTemplates.dark;
     updateFile("style.css", defaultTheme);
     applyCSSVariables(defaultTheme);
+    setThemeMode('dark');
+    saveThemeMode('dark');
+    setLastKnownTheme('dark');
+    saveLastKnownTheme('dark');
 
     const styleCssGroup = editorGroups.find((g) => g.activeTab === "style.css");
     if (styleCssGroup && editorRefs.current[styleCssGroup.id]) {
@@ -1327,9 +1424,7 @@ export default function Home() {
   };
 
   const handleTabDoubleClick = (filename) => {
-    if (filename === "style.css") {
-      handleResetTheme();
-    } else if (filename && filename.endsWith(".html") && currentUserId && filename === `${currentUserId}.html`) {
+    if (filename && filename.endsWith(".html") && currentUserId && filename === `${currentUserId}.html`) {
       setProfileHtmlViewMode(!profileHtmlViewMode);
     } else if (filename && filename.endsWith(".html")) {
       setProblemHtmlViewMode(!problemHtmlViewMode);
@@ -1444,6 +1539,8 @@ export default function Home() {
             files={files}
             currentFile={currentFile}
             onFileClick={handleOpenFile}
+            currentThemeMode={themeMode}
+            onThemeToggle={handleThemeToggle}
           />
         </div>
 
@@ -1482,6 +1579,7 @@ export default function Home() {
                 <EditorGroup
                   currentUserId={currentUserId}
                   currentProblemNumber={currentProblemNumber}
+                  currentThemeMode={themeMode}
                   group={group}
                   files={files}
                   onEditorChange={handleEditorChange}

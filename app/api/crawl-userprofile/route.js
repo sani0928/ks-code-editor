@@ -1,4 +1,4 @@
-import { escapeHtml } from '../../../lib/utils';
+import { escapeHtml, convertTierLevel, getTierColor } from '../../../lib/utils';
 
 export async function POST(request) {
   try {
@@ -19,54 +19,6 @@ export async function POST(request) {
     }
 
     const userData = await response.json();
-
-    // 티어 레벨을 문자열로 변환
-    function convertTierLevel(level) {
-      if (!level) return null;
-      
-      const romanNumerals = { 1: "V", 2: "IV", 3: "III", 4: "II", 5: "I" };
-      let tierName, tierLevel;
-      
-      if (level <= 5) {
-        tierName = "Bronze";
-        tierLevel = level;
-      } else if (level <= 10) {
-        tierName = "Silver";
-        tierLevel = level - 5;
-      } else if (level <= 15) {
-        tierName = "Gold";
-        tierLevel = level - 10;
-      } else if (level <= 20) {
-        tierName = "Platinum";
-        tierLevel = level - 15;
-      } else if (level <= 25) {
-        tierName = "Diamond";
-        tierLevel = level - 20;
-      } else if (level <= 30) {
-        tierName = "Ruby";
-        tierLevel = level - 25;
-      } else {
-        return "Master";
-      }
-      
-      return `${tierName} ${romanNumerals[tierLevel]}`;
-    }
-
-    // 티어별 색상 반환 함수
-    function getTierColor(tierName) {
-      if (!tierName) return '#007acc';
-      
-      const tier = tierName.toLowerCase();
-      if (tier.includes('bronze')) return '#AD5600'; // 브론즈 - 황동색
-      if (tier.includes('silver')) return '#435F7A'; // 실버 - 은색
-      if (tier.includes('gold')) return '#EC9A00'; // 골드 - 금색
-      if (tier.includes('platinum')) return '#27E2A4'; // 플래티넘 - 청록색
-      if (tier.includes('diamond')) return '#00B4FC'; // 다이아몬드 - 파란색
-      if (tier.includes('ruby')) return '#FF0062'; // 루비 - 분홍색
-      if (tier.includes('master')) return '#000000'; // 마스터 - 검은색
-      
-      return '#007acc'; // 기본 색상
-    }
 
 
     // 날짜 포맷팅
@@ -103,23 +55,23 @@ export async function POST(request) {
       max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
-      background-color: #1e1e1e;
-      color: #cccccc;
+      background-color: var(--color-bg-main, #1e1e1e);
+      color: var(--color-text-primary, #cccccc);
     }
     h1 {
-      border-bottom: 2px solid #3e3e42;
+      border-bottom: 2px solid var(--color-border-default, #3e3e42);
       padding-bottom: 10px;
       margin-bottom: 20px;
     }
     h2 {
-      color: #2d8474;
+      color: var(--color-button-secondary-bg, #2d8474);
       margin-top: 30px;
-      border-bottom: 1px solid #3e3e42;
+      border-bottom: 1px solid var(--color-border-default, #3e3e42);
       padding-bottom: 5px;
     }
     .tier {
       display: inline-block;
-      color: white;
+      color: var(--color-text-button, #ffffff);
       padding: 6px 16px;
       border-radius: 4px;
       font-size: 16px;
@@ -127,7 +79,7 @@ export async function POST(request) {
       font-weight: 600;
     }
     .bio {
-      color: #858585;
+      color: var(--color-text-secondary, #858585);
       font-size: 14px;
       margin-top: 10px;
       margin-bottom: 20px;
@@ -140,19 +92,19 @@ export async function POST(request) {
       margin: 20px 0;
     }
     .info-item {
-      background-color: #252526;
+      background-color: var(--color-bg-sidebar, #252526);
       padding: 15px;
       border-radius: 5px;
-      border: 1px solid #3e3e42;
+      border: 1px solid var(--color-border-default, #3e3e42);
     }
     .info-label {
-      color: #858585;
+      color: var(--color-text-secondary, #858585);
       font-size: 12px;
       text-transform: uppercase;
       margin-bottom: 5px;
     }
     .info-value {
-      color: #cccccc;
+      color: var(--color-text-primary, #cccccc);
       font-size: 16px;
       font-weight: 600;
     }
@@ -164,19 +116,19 @@ export async function POST(request) {
       max-width: 800px;
     }
     .rating-item {
-      background-color: #252526;
+      background-color: var(--color-bg-sidebar, #252526);
       padding: 15px;
       border-radius: 5px;
-      border: 1px solid #3e3e42;
+      border: 1px solid var(--color-border-default, #3e3e42);
       text-align: center;
     }
     .rating-label {
-      color: #858585;
+      color: var(--color-text-secondary, #858585);
       font-size: 12px;
       margin-bottom: 8px;
     }
     .rating-value {
-      color: #cccccc;
+      color: var(--color-text-primary, #cccccc);
       font-size: 20px;
       font-weight: 600;
     }

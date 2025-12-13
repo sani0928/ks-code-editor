@@ -205,7 +205,7 @@ export default function TitleBar({
           style={{
             height: '24px',
             padding: '0 12px',
-            backgroundColor: isSameProblem ? 'var(--color-bg-sidebar)' : 'var(--color-button-secondary-bg)',
+            backgroundColor: 'var(--color-button-secondary-bg)',
             color: 'var(--color-text-button)',
             border: 'none',
             borderRadius: '5px',

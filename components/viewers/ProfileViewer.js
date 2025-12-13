@@ -1,69 +1,37 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { themeTemplates } from '../../constants/skeletonCode';
+import { extractCSSVariables } from '../../lib/theme';
+import { extractHeadStyles, extractBodyContent } from '../../lib/utils';
+
+/**
+ * CSS 변수를 :root 스타일 문자열로 변환
+ */
+const getCSSVariablesStyle = (themeMode, css) => {
+  let cssToParse = css;
+  
+  // CSS가 없거나 themeMode에 따라 기본 테마 템플릿 사용
+  if (!cssToParse || themeMode === 'dark' || themeMode === 'light') {
+    cssToParse = themeTemplates[themeMode] || themeTemplates.dark;
+  }
+  
+  const variables = extractCSSVariables(cssToParse);
+  
+  // CSS 변수를 :root 스타일로 변환
+  const variableDeclarations = Object.entries(variables)
+    .map(([key, value]) => `      --${key}: ${value};`)
+    .join('\n');
+  
+  return `:root {\n${variableDeclarations}\n    }`;
+};
 
 /**
  * 프로필 HTML 미리보기 컴포넌트
  */
-export default function ProfileViewer({ html, css, userId }) {
+export default function ProfileViewer({ html, css, userId, themeMode = 'dark' }) {
   const containerRef = useRef(null);
 
-  // HTML에서 head 내부의 style 태그 추출
-  const extractHeadStyles = (htmlString) => {
-    if (!htmlString) return '';
-    const headMatch = htmlString.match(/<head[^>]*>([\s\S]*)<\/head>/i);
-    if (!headMatch) return '';
-    
-    const headContent = headMatch[1];
-    const styleMatches = headContent.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
-    if (!styleMatches) return '';
-    
-    // 모든 style 태그의 내용을 추출하여 합침
-    return styleMatches
-      .map(styleTag => {
-        const contentMatch = styleTag.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
-        return contentMatch ? contentMatch[1] : '';
-      })
-      .join('\n');
-  };
-
-  // HTML에서 body 내용 추출 및 유저 아이디에 링크 추가
-  const extractBodyContent = (htmlString) => {
-    if (!htmlString) return '';
-    let bodyContent = '';
-    const bodyMatch = htmlString.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-    if (bodyMatch) {
-      bodyContent = bodyMatch[1];
-    } else {
-      // body 태그가 없으면 전체 HTML에서 html, head, body 태그 제거
-      bodyContent = htmlString
-        .replace(/<!DOCTYPE[^>]*>/gi, '')
-        .replace(/<html[^>]*>/gi, '')
-        .replace(/<\/html>/gi, '')
-        .replace(/<head[^>]*>[\s\S]*<\/head>/gi, '')
-        .replace(/<body[^>]*>/gi, '')
-        .replace(/<\/body>/gi, '');
-    }
-    
-    // 유저 아이디가 있고 h1 태그에 링크가 없으면 링크 추가
-    if (userId && bodyContent) {
-      // h1 태그를 찾아서 링크로 감싸기 (이미 링크가 있는 경우 제외)
-      bodyContent = bodyContent.replace(
-        /<h1([^>]*)>([^<]+)<\/h1>/gi,
-        (match, attributes, titleText) => {
-          // 이미 링크가 있는지 확인
-          if (match.includes('<a') || match.includes('href=')) {
-            return match;
-          }
-          // 링크가 없으면 추가
-          const profileUrl = `https://solved.ac/profile/${userId}`;
-          return `<h1${attributes}><a href="${profileUrl}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">${titleText}</a></h1>`;
-        }
-      );
-    }
-    
-    return bodyContent;
-  };
 
   // 기본 스타일 리셋 및 개선
   const getBaseStyles = () => {
@@ -87,8 +55,8 @@ export default function ProfileViewer({ html, css, userId }) {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         font-size: 14px;
         line-height: 1.8;
-        color: #e4e4e4;
-        background-color: #1e1e1e;
+        color: var(--color-text-primary, #cccccc);
+        background-color: var(--color-bg-main, #1e1e1e);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         box-sizing: border-box;
@@ -100,8 +68,8 @@ export default function ProfileViewer({ html, css, userId }) {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         font-size: 14px;
         line-height: 1.8;
-        color: #e4e4e4;
-        background-color: #1e1e1e;
+        color: var(--color-text-primary, #cccccc);
+        background-color: var(--color-bg-main, #1e1e1e);
         letter-spacing: 0.01em;
       }
       
@@ -112,21 +80,21 @@ export default function ProfileViewer({ html, css, userId }) {
       }
       
       ::-webkit-scrollbar-track {
-        background: #252526;
+        background: var(--color-scrollbar-track, var(--color-bg-sidebar, #252526));
       }
       
       ::-webkit-scrollbar-thumb {
-        background: #424242;
+        background: var(--color-scrollbar-thumb, #424242);
         border-radius: 5px;
       }
       
       ::-webkit-scrollbar-thumb:hover {
-        background: #4e4e4e;
+        background: var(--color-scrollbar-thumb-hover, #4e4e4e);
       }
       
       /* 기본 링크 스타일 */
       a {
-        color: #007acc;
+        color: var(--color-accent-primary, #007acc);
         text-decoration: none;
       }
       
@@ -141,7 +109,7 @@ export default function ProfileViewer({ html, css, userId }) {
         margin-bottom: 0.8em;
         font-weight: 700;
         line-height: 1.3;
-        color: #ffffff;
+        color: var(--color-text-primary, #ffffff);
         letter-spacing: -0.02em;
       }
       
@@ -151,7 +119,7 @@ export default function ProfileViewer({ html, css, userId }) {
         margin-bottom: 0.7em;
         font-weight: 600;
         line-height: 1.3;
-        color: #f0f0f0;
+        color: var(--color-text-primary, #f0f0f0);
         letter-spacing: -0.01em;
       }
       
@@ -161,7 +129,7 @@ export default function ProfileViewer({ html, css, userId }) {
         margin-bottom: 0.6em;
         font-weight: 600;
         line-height: 1.4;
-        color: #f0f0f0;
+        color: var(--color-text-primary, #f0f0f0);
       }
       
       h4, h5, h6 {
@@ -170,7 +138,7 @@ export default function ProfileViewer({ html, css, userId }) {
         margin-bottom: 0.5em;
         font-weight: 600;
         line-height: 1.4;
-        color: #e8e8e8;
+        color: var(--color-text-primary, #e8e8e8);
       }
       
       /* h1 내부 링크 스타일 */
@@ -189,7 +157,7 @@ export default function ProfileViewer({ html, css, userId }) {
       p {
         margin-bottom: 1.2em;
         line-height: 1.8;
-        color: #e4e4e4;
+        color: var(--color-text-primary, #cccccc);
       }
       
       /* 리스트 스타일 */
@@ -201,7 +169,7 @@ export default function ProfileViewer({ html, css, userId }) {
       
       li {
         margin-bottom: 0.5em;
-        color: #e4e4e4;
+        color: var(--color-text-primary, #cccccc);
       }
       
       /* 테이블 스타일 */
@@ -214,28 +182,28 @@ export default function ProfileViewer({ html, css, userId }) {
       
       th, td {
         padding: 0.6em 0.8em;
-        border: 1px solid #3e3e42;
+        border: 1px solid var(--color-border-default, #3e3e42);
         text-align: left;
       }
       
       th {
-        background-color: #2d2d30;
+        background-color: var(--color-bg-header, #2d2d30);
         font-weight: 600;
-        color: #ffffff;
+        color: var(--color-text-primary, #ffffff);
       }
       
       td {
-        background-color: #252526;
-        color: #e4e4e4;
+        background-color: var(--color-bg-sidebar, #252526);
+        color: var(--color-text-primary, #cccccc);
       }
       
       /* 코드 블록 스타일 */
       pre {
-        background-color: #252526;
+        background-color: var(--color-bg-sidebar, #252526);
         padding: 16px;
         border-radius: 6px;
         overflow-x: auto;
-        border: 1px solid #3e3e42;
+        border: 1px solid var(--color-border-default, #3e3e42);
         margin: 1.2em 0;
         line-height: 1.6;
         font-size: 0.9em;
@@ -244,8 +212,8 @@ export default function ProfileViewer({ html, css, userId }) {
       code {
         font-family: 'Consolas', 'Courier New', 'Monaco', monospace;
         font-size: 0.9em;
-        color: #d4d4d4;
-        background-color: rgba(255, 255, 255, 0.05);
+        color: var(--color-text-primary, #cccccc);
+        background-color: var(--color-bg-sidebar, #252526);
         padding: 2px 6px;
         border-radius: 3px;
       }
@@ -254,7 +222,7 @@ export default function ProfileViewer({ html, css, userId }) {
         background-color: transparent;
         padding: 0;
         border: none;
-        color: #d4d4d4;
+        color: var(--color-text-primary, #cccccc);
         font-size: 0.9em;
         line-height: 1.6;
       }
@@ -263,7 +231,7 @@ export default function ProfileViewer({ html, css, userId }) {
       p code, li code, td code {
         font-size: 0.9em;
         padding: 2px 6px;
-        background-color: rgba(255, 255, 255, 0.08);
+        background-color: var(--color-bg-sidebar, #252526);
         border-radius: 3px;
       }
     `;
@@ -279,7 +247,13 @@ export default function ProfileViewer({ html, css, userId }) {
     }
 
     const headStyles = extractHeadStyles(html || '');
-    const bodyContent = extractBodyContent(html || '', userId);
+    const bodyContent = extractBodyContent(html || '', {
+      linkId: userId,
+      linkType: 'profile'
+    });
+    
+    // CSS 변수 주입
+    const cssVariablesStyle = getCSSVariablesStyle(themeMode, css);
     
     // 모든 CSS 통합
     const baseStyles = getBaseStyles();
@@ -295,16 +269,18 @@ export default function ProfileViewer({ html, css, userId }) {
       
       /* 텍스트 선택 시 색상 */
       ::selection {
-        background-color: #264f78;
-        color: #ffffff;
+        background-color: var(--color-accent-primary, #007acc);
+        color: var(--color-text-button, #ffffff);
+        opacity: 0.6;
       }
       
       ::-moz-selection {
-        background-color: #264f78;
-        color: #ffffff;
+        background-color: var(--color-accent-primary, #007acc);
+        color: var(--color-text-button, #ffffff);
+        opacity: 0.6;
       }
     `;
-    const allCSS = [baseStyles, containerStyles, headStyles, css || ''].filter(Boolean).join('\n');
+    const allCSS = [cssVariablesStyle, baseStyles, containerStyles, headStyles].filter(Boolean).join('\n');
     
     // Shadow DOM에 내용 삽입
     shadowRoot.innerHTML = `
@@ -313,7 +289,7 @@ export default function ProfileViewer({ html, css, userId }) {
         ${bodyContent}
       </div>
     `;
-  }, [html, css, userId]);
+  }, [html, css, userId, themeMode]);
 
   return (
     <div 

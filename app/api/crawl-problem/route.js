@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import { escapeHtml } from '../../../lib/utils';
+import { escapeHtml, convertTierLevel, getTierColor } from '../../../lib/utils';
 
 export async function POST(request) {
   try {
@@ -16,34 +16,7 @@ export async function POST(request) {
       const tierData = await tierResponse.json();
       const level = tierData.level;
       if (level) {
-        const romanNumerals = { 1: "V", 2: "IV", 3: "III", 4: "II", 5: "I" };
-        let tierName, tierLevel;
-        
-        if (level <= 5) {
-          tierName = "Bronze";
-          tierLevel = level;
-        } else if (level <= 10) {
-          tierName = "Silver";
-          tierLevel = level - 5;
-        } else if (level <= 15) {
-          tierName = "Gold";
-          tierLevel = level - 10;
-        } else if (level <= 20) {
-          tierName = "Platinum";
-          tierLevel = level - 15;
-        } else if (level <= 25) {
-          tierName = "Diamond";
-          tierLevel = level - 20;
-        } else if (level <= 30) {
-          tierName = "Ruby";
-          tierLevel = level - 25;
-        } else {
-          tier = "Master";
-        }
-        
-        if (!tier) {
-          tier = `${tierName} ${romanNumerals[tierLevel]}`;
-        }
+        tier = convertTierLevel(level);
       }
     }
 
@@ -180,21 +153,6 @@ export async function POST(request) {
     }
 
 
-    // 티어별 색상 반환 함수
-    function getTierColor(tierName) {
-      if (!tierName) return '#007acc';
-      
-      const tier = tierName.toLowerCase();
-      if (tier.includes('bronze')) return '#AD5600'; // 브론즈 - 황동색
-      if (tier.includes('silver')) return '#435F7A'; // 실버 - 은색
-      if (tier.includes('gold')) return '#EC9A00'; // 골드 - 금색
-      if (tier.includes('platinum')) return '#27E2A4'; // 플래티넘 - 청록색
-      if (tier.includes('diamond')) return '#00B4FC'; // 다이아몬드 - 파란색
-      if (tier.includes('ruby')) return '#FF0062'; // 루비 - 분홍색
-      if (tier.includes('master')) return '#000000'; // 마스터 - 검은색
-      
-      return '#007acc'; // 기본 색상
-    }
 
     // problem.html 내용 생성 (HTML 형식 - 이미지 포함)
     let problemHtml = `<!DOCTYPE html>
@@ -210,27 +168,27 @@ export async function POST(request) {
       max-width: 1200px;
       margin: 0 auto;
       padding: 20px;
-      background-color: #1e1e1e;
-      color: #cccccc;
+      background-color: var(--color-bg-main, #1e1e1e);
+      color: var(--color-text-primary, #cccccc);
     }
     h1 {
-      color: #2d8474;
-      border-bottom: 2px solid #3e3e42;
+      color: var(--color-button-secondary-bg, #2d8474);
+      border-bottom: 2px solid var(--color-border-default, #3e3e42);
       padding-bottom: 10px;
     }
     h2 {
-      color: #2d8474;
+      color: var(--color-button-secondary-bg, #2d8474);
       margin-top: 30px;
-      border-bottom: 1px solid #3e3e42;
+      border-bottom: 1px solid var(--color-border-default, #3e3e42);
       padding-bottom: 5px;
     }
     h3 {
-      color: #cccccc;
+      color: var(--color-text-primary, #cccccc);
       margin-top: 20px;
     }
     .tier {
       display: inline-block;
-      color: white;
+      color: var(--color-text-button, #ffffff);
       padding: 4px 12px;
       border-radius: 4px;
       font-size: 14px;
@@ -238,11 +196,11 @@ export async function POST(request) {
       font-weight: 600;
     }
     pre {
-      background-color: #252526;
+      background-color: var(--color-bg-sidebar, #252526);
       padding: 15px;
       border-radius: 5px;
       overflow-x: auto;
-      border: 1px solid #3e3e42;
+      border: 1px solid var(--color-border-default, #3e3e42);
       margin: 0;
     }
     pre code {
@@ -250,24 +208,48 @@ export async function POST(request) {
       padding: 0;
       border-radius: 0;
       font-family: 'Consolas', 'Courier New', monospace;
+      color: var(--color-text-primary, #cccccc);
     }
     code {
-      background-color: #252526;
+      background-color: var(--color-bg-sidebar, #252526);
       padding: 2px 6px;
       border-radius: 3px;
       font-family: 'Consolas', 'Courier New', monospace;
+      color: var(--color-text-primary, #cccccc);
     }
     img {
       max-width: 100%;
       height: auto;
       margin: 10px 0;
-      border: 1px solid #3e3e42;
+      border: 1px solid var(--color-border-default, #3e3e42);
       border-radius: 5px;
     }
     hr {
       border: none;
-      border-top: 1px solid #3e3e42;
+      border-top: 1px solid var(--color-border-default, #3e3e42);
       margin: 30px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background-color: var(--color-bg-sidebar, #252526);
+      border: 1px solid var(--color-border-default, #3e3e42);
+      border-radius: 5px;
+    }
+    thead {
+      background-color: var(--color-bg-header, #2d2d30);
+    }
+    th {
+      padding: 10px;
+      text-align: left;
+      border: 1px solid var(--color-border-default, #3e3e42);
+      color: var(--color-text-primary, #cccccc);
+    }
+    td {
+      padding: 10px;
+      border: 1px solid var(--color-border-default, #3e3e42);
+      color: var(--color-text-primary, #cccccc);
     }
   </style>
 </head>
@@ -277,25 +259,25 @@ export async function POST(request) {
   
   ${(problemInfo.timeLimit || problemInfo.memoryLimit || problemInfo.submissions || 
       problemInfo.correctAnswers || problemInfo.correctUsers || problemInfo.correctRate) ? `
-  <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: #252526; border: 1px solid #3e3e42; border-radius: 5px;">
+  <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: var(--color-bg-sidebar, #252526); border: 1px solid var(--color-border-default, #3e3e42); border-radius: 5px;">
     <thead>
-      <tr style="background-color: #2d2d30;">
-        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #cccccc;">시간 제한</th>
-        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #cccccc;">메모리 제한</th>
-        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #cccccc;">제출</th>
-        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #cccccc;">정답</th>
-        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #cccccc;">맞힌 사람</th>
-        <th style="padding: 10px; text-align: left; border: 1px solid #3e3e42; color: #cccccc;">정답 비율</th>
+      <tr style="background-color: var(--color-bg-header, #2d2d30);">
+        <th style="padding: 12px 15px; text-align: left; border: 1px solid var(--color-border-default, #3e3e42); color: var(--color-text-primary, #cccccc); font-weight: 600; font-size: 14px;">시간 제한</th>
+        <th style="padding: 12px 15px; text-align: left; border: 1px solid var(--color-border-default, #3e3e42); color: var(--color-text-primary, #cccccc); font-weight: 600; font-size: 14px;">메모리 제한</th>
+        <th style="padding: 12px 15px; text-align: left; border: 1px solid var(--color-border-default, #3e3e42); color: var(--color-text-primary, #cccccc); font-weight: 600; font-size: 14px;">제출</th>
+        <th style="padding: 12px 15px; text-align: left; border: 1px solid var(--color-border-default, #3e3e42); color: var(--color-text-primary, #cccccc); font-weight: 600; font-size: 14px;">정답</th>
+        <th style="padding: 12px 15px; text-align: left; border: 1px solid var(--color-border-default, #3e3e42); color: var(--color-text-primary, #cccccc); font-weight: 600; font-size: 14px;">맞힌 사람</th>
+        <th style="padding: 12px 15px; text-align: left; border: 1px solid var(--color-border-default, #3e3e42); color: var(--color-text-primary, #cccccc); font-weight: 600; font-size: 14px;">정답 비율</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td style="padding: 10px; border: 1px solid #3e3e42; color: #cccccc;">${problemInfo.timeLimit ? escapeHtml(problemInfo.timeLimit) : '-'}</td>
-        <td style="padding: 10px; border: 1px solid #3e3e42; color: #cccccc;">${problemInfo.memoryLimit ? escapeHtml(problemInfo.memoryLimit) : '-'}</td>
-        <td style="padding: 10px; border: 1px solid #3e3e42; color: #cccccc;">${problemInfo.submissions ? escapeHtml(problemInfo.submissions) : '-'}</td>
-        <td style="padding: 10px; border: 1px solid #3e3e42; color: #cccccc;">${problemInfo.correctAnswers ? escapeHtml(problemInfo.correctAnswers) : '-'}</td>
-        <td style="padding: 10px; border: 1px solid #3e3e42; color: #cccccc;">${problemInfo.correctUsers ? escapeHtml(problemInfo.correctUsers) : '-'}</td>
-        <td style="padding: 10px; border: 1px solid #3e3e42; color: #cccccc;">${problemInfo.correctRate ? escapeHtml(problemInfo.correctRate) : '-'}</td>
+        <td style="padding: 12px 15px; border: 1px solid var(--color-border-default, #3e3e42); color: var(--color-text-primary, #cccccc); font-size: 14px; font-weight: 500;">${problemInfo.timeLimit ? escapeHtml(problemInfo.timeLimit) : '-'}</td>
+        <td style="padding: 12px 15px; border: 1px solid var(--color-border-default, #3e3e42); color: var(--color-text-primary, #cccccc); font-size: 14px; font-weight: 500;">${problemInfo.memoryLimit ? escapeHtml(problemInfo.memoryLimit) : '-'}</td>
+        <td style="padding: 12px 15px; border: 1px solid var(--color-border-default, #3e3e42); color: var(--color-text-primary, #cccccc); font-size: 14px; font-weight: 500;">${problemInfo.submissions ? escapeHtml(problemInfo.submissions) : '-'}</td>
+        <td style="padding: 12px 15px; border: 1px solid var(--color-border-default, #3e3e42); color: var(--color-text-primary, #cccccc); font-size: 14px; font-weight: 500;">${problemInfo.correctAnswers ? escapeHtml(problemInfo.correctAnswers) : '-'}</td>
+        <td style="padding: 12px 15px; border: 1px solid var(--color-border-default, #3e3e42); color: var(--color-text-primary, #cccccc); font-size: 14px; font-weight: 500;">${problemInfo.correctUsers ? escapeHtml(problemInfo.correctUsers) : '-'}</td>
+        <td style="padding: 12px 15px; border: 1px solid var(--color-border-default, #3e3e42); color: var(--color-text-primary, #cccccc); font-size: 14px; font-weight: 500;">${problemInfo.correctRate ? escapeHtml(problemInfo.correctRate) : '-'}</td>
       </tr>
     </tbody>
   </table>

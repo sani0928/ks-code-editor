@@ -9,7 +9,9 @@ import { getSortedFileList, specialFiles } from '../../lib/fileManager';
 export default function FileExplorer({ 
   files, 
   currentFile, 
-  onFileClick
+  onFileClick,
+  currentThemeMode,
+  onThemeToggle
 }) {
   const sortedFiles = getSortedFileList(files);
   
@@ -33,6 +35,8 @@ export default function FileExplorer({
           filename={filename}
           isActive={currentFile === filename}
           onClick={() => onFileClick(filename)}
+          currentThemeMode={currentThemeMode}
+          onThemeToggle={onThemeToggle}
         />
       ))}
       {special.length > 0 && (
@@ -49,6 +53,8 @@ export default function FileExplorer({
               isActive={currentFile === filename}
               onClick={() => onFileClick(filename)}
               isSpecial={true}
+              currentThemeMode={currentThemeMode}
+              onThemeToggle={onThemeToggle}
             />
           ))}
         </>
