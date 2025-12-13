@@ -550,16 +550,19 @@ export default function Home() {
 
         if (e.ctrlKey && e.key === "s") {
           e.preventDefault();
-          const activeEditor = editorRefs.current[activeGroupId];
           const activeGroup = editorGroups.find((g) => g.id === activeGroupId);
-          if (activeGroup && activeGroup.activeTab && activeEditor) {
+          if (activeGroup && activeGroup.activeTab) {
             const filename = activeGroup.activeTab;
-            const content = activeEditor.getValue();
-            updateFile(filename, content);
+            const editorKey = `${activeGroupId}-${filename}`;
+            const activeEditor = editorRefs.current[editorKey] || editorRefs.current[activeGroupId];
+            if (activeEditor) {
+              const content = activeEditor.getValue();
+              updateFile(filename, content);
 
-            // 코드 파일인 경우 다운로드
-            if (isCodeFile(filename)) {
-              handleDownloadFile(filename, content);
+              // 코드 파일인 경우 다운로드
+              if (isCodeFile(filename)) {
+                handleDownloadFile(filename, content);
+              }
             }
           }
           return;
@@ -570,16 +573,19 @@ export default function Home() {
 
       if (e.ctrlKey && e.key === "s") {
         e.preventDefault();
-        const activeEditor = editorRefs.current[activeGroupId];
         const activeGroup = editorGroups.find((g) => g.id === activeGroupId);
-        if (activeGroup && activeGroup.activeTab && activeEditor) {
+        if (activeGroup && activeGroup.activeTab) {
           const filename = activeGroup.activeTab;
-          const content = activeEditor.getValue();
-          updateFile(filename, content);
+          const editorKey = `${activeGroupId}-${filename}`;
+          const activeEditor = editorRefs.current[editorKey] || editorRefs.current[activeGroupId];
+          if (activeEditor) {
+            const content = activeEditor.getValue();
+            updateFile(filename, content);
 
-          // 코드 파일인 경우 다운로드
-          if (isCodeFile(filename)) {
-            handleDownloadFile(filename, content);
+            // 코드 파일인 경우 다운로드
+            if (isCodeFile(filename)) {
+              handleDownloadFile(filename, content);
+            }
           }
         }
       }
@@ -966,7 +972,10 @@ export default function Home() {
     }
   }, [editorGroups, updateFile]);
 
-  const handleEditorMount = useCallback((editor, groupId) => {
+  const handleEditorMount = useCallback((editor, groupId, filename) => {
+    const editorKey = `${groupId}-${filename}`;
+    editorRefs.current[editorKey] = editor;
+    // 기존 그룹별 참조도 유지 (하위 호환성)
     editorRefs.current[groupId] = editor;
 
     if (groupId === activeGroupId) {
@@ -980,7 +989,7 @@ export default function Home() {
     editor.onDidChangeCursorPosition((e) => {
       const position = e.position;
       const group = editorGroups.find((g) => g.id === groupId);
-      if (group && group.id === activeGroupId && group.activeTab) {
+      if (group && group.id === activeGroupId && group.activeTab === filename) {
         setCursorPosition(`Ln ${position.lineNumber}, Col ${position.column}`);
       }
     });
@@ -1254,7 +1263,13 @@ export default function Home() {
       return;
     }
 
-    const activeEditor = editorRefs.current[activeGroupId];
+    const activeGroup = editorGroups.find((g) => g.id === activeGroupId);
+    if (!activeGroup || !activeGroup.activeTab) {
+      alert("코드를 작성해주세요.");
+      return;
+    }
+    const editorKey = `${activeGroupId}-${activeGroup.activeTab}`;
+    const activeEditor = editorRefs.current[editorKey] || editorRefs.current[activeGroupId];
     if (!activeEditor) {
       alert("코드를 작성해주세요.");
       return;
@@ -1389,8 +1404,12 @@ export default function Home() {
 
     // 에디터에 반영
     const styleCssGroup = editorGroups.find((g) => g.activeTab === "style.css");
-    if (styleCssGroup && editorRefs.current[styleCssGroup.id]) {
-      editorRefs.current[styleCssGroup.id].setValue(newTheme);
+    if (styleCssGroup) {
+      const editorKey = `${styleCssGroup.id}-style.css`;
+      const editor = editorRefs.current[editorKey] || editorRefs.current[styleCssGroup.id];
+      if (editor) {
+        editor.setValue(newTheme);
+      }
     }
   };
 
@@ -1405,8 +1424,12 @@ export default function Home() {
     saveLastKnownTheme('dark');
 
     const styleCssGroup = editorGroups.find((g) => g.activeTab === "style.css");
-    if (styleCssGroup && editorRefs.current[styleCssGroup.id]) {
-      editorRefs.current[styleCssGroup.id].setValue(defaultTheme);
+    if (styleCssGroup) {
+      const editorKey = `${styleCssGroup.id}-style.css`;
+      const editor = editorRefs.current[editorKey] || editorRefs.current[styleCssGroup.id];
+      if (editor) {
+        editor.setValue(defaultTheme);
+      }
     }
   };
 

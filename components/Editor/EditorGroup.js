@@ -242,7 +242,8 @@ export default function EditorGroup({
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          position: 'relative'
         }}
         onClick={() => {
           if (onEditorClick && group.activeTab) {
@@ -250,53 +251,7 @@ export default function EditorGroup({
           }
         }}
       >
-        {activeFile ? (
-          isChatbot ? (
-            <ChatbotViewer />
-          ) : isProfileHtml ? (
-            profileHtmlViewMode ? (
-              <ProfileViewer 
-                html={files[activeFile] || ''} 
-                css={files['style.css'] || ''}
-                userId={currentUserId}
-                themeMode={currentThemeMode}
-              />
-            ) : (
-              <MonacoEditor
-                key={`${group.id}-${activeFile}`}
-                value={files[activeFile] || ''}
-                language="html"
-                onChange={(value) => onEditorChange(value, group.id)}
-                onMount={(editor) => onEditorMount(editor, group.id)}
-              />
-            )
-          ) : isProblemHtml ? (
-            problemHtmlViewMode ? (
-              <ProblemViewer 
-                html={files[activeFile] || ''} 
-                css={files['style.css'] || ''}
-                problemNumber={currentProblemNumber}
-                themeMode={currentThemeMode}
-              />
-            ) : (
-              <MonacoEditor
-                key={`${group.id}-${activeFile}`}
-                value={files[activeFile] || ''}
-                language="html"
-                onChange={(value) => onEditorChange(value, group.id)}
-                onMount={(editor) => onEditorMount(editor, group.id)}
-              />
-            )
-          ) : (
-            <MonacoEditor
-              key={`${group.id}-${activeFile}`}
-              value={files[activeFile] || ''}
-              language={language}
-              onChange={(value) => onEditorChange(value, group.id)}
-              onMount={(editor) => onEditorMount(editor, group.id)}
-            />
-          )
-        ) : (
+        {group.tabs.length === 0 ? (
           <div style={{
             flex: 1,
             display: 'flex',
@@ -307,6 +262,92 @@ export default function EditorGroup({
           }}>
             파일을 열어주세요
           </div>
+        ) : (
+          group.tabs.map((filename) => {
+            const isActive = activeFile === filename;
+            const fileLanguage = getLanguageFromFile(filename);
+            const fileIsProfileHtml = currentUserId && filename === `${currentUserId}.html`;
+            const fileIsChatbot = filename === '옜다정답.ai';
+            const fileIsProblemHtml = filename && 
+              !fileIsProfileHtml &&
+              !fileIsChatbot &&
+              filename.endsWith('.html') && 
+              files[filename] && 
+              (files[filename].includes('<!DOCTYPE html>') || files[filename].includes('<html'));
+
+            // 모든 탭의 에디터를 렌더링하되, 활성 탭만 표시 (undo/redo 히스토리 유지)
+            const containerStyle = {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: isActive ? 'flex' : 'none',
+              flexDirection: 'column'
+            };
+
+            if (fileIsChatbot) {
+              return (
+                <div key={`${group.id}-${filename}-chatbot`} style={containerStyle}>
+                  <ChatbotViewer />
+                </div>
+              );
+            } else if (fileIsProfileHtml) {
+              return profileHtmlViewMode ? (
+                <div key={`${group.id}-${filename}-profile`} style={containerStyle}>
+                  <ProfileViewer 
+                    html={files[filename] || ''} 
+                    css={files['style.css'] || ''}
+                    userId={currentUserId}
+                    themeMode={currentThemeMode}
+                  />
+                </div>
+              ) : (
+                <div key={`${group.id}-${filename}`} style={containerStyle}>
+                  <MonacoEditor
+                    editorKey={`${group.id}-${filename}`}
+                    value={files[filename] || ''}
+                    language="html"
+                    onChange={(value) => onEditorChange(value, group.id)}
+                    onMount={(editor) => onEditorMount(editor, group.id, filename)}
+                  />
+                </div>
+              );
+            } else if (fileIsProblemHtml) {
+              return problemHtmlViewMode ? (
+                <div key={`${group.id}-${filename}-problem`} style={containerStyle}>
+                  <ProblemViewer 
+                    html={files[filename] || ''} 
+                    css={files['style.css'] || ''}
+                    problemNumber={currentProblemNumber}
+                    themeMode={currentThemeMode}
+                  />
+                </div>
+              ) : (
+                <div key={`${group.id}-${filename}`} style={containerStyle}>
+                  <MonacoEditor
+                    editorKey={`${group.id}-${filename}`}
+                    value={files[filename] || ''}
+                    language="html"
+                    onChange={(value) => onEditorChange(value, group.id)}
+                    onMount={(editor) => onEditorMount(editor, group.id, filename)}
+                  />
+                </div>
+              );
+            } else {
+              return (
+                <div key={`${group.id}-${filename}`} style={containerStyle}>
+                  <MonacoEditor
+                    editorKey={`${group.id}-${filename}`}
+                    value={files[filename] || ''}
+                    language={fileLanguage}
+                    onChange={(value) => onEditorChange(value, group.id)}
+                    onMount={(editor) => onEditorMount(editor, group.id, filename)}
+                  />
+                </div>
+              );
+            }
+          })
         )}
       </div>
     </div>

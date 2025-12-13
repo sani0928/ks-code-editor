@@ -10,6 +10,8 @@ const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
 
 /**
  * Monaco Editor 래퍼 컴포넌트
+ * 각 파일별로 고유한 key를 사용하여 에디터 인스턴스를 유지하고,
+ * undo/redo 히스토리를 보존합니다.
  */
 export default function MonacoEditorWrapper({
   value,
